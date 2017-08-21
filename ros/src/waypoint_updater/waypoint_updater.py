@@ -3,6 +3,7 @@
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+import std_msgs.msg
 
 import math
 
@@ -28,12 +29,12 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
+        rospy.logwarn("WaypointUpdater starting!!!!")
+
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-
-
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
@@ -42,19 +43,29 @@ class WaypointUpdater(object):
 
     def pose_cb(self, msg):
         # TODO: Implement
-        pass
+        rospy.logwarn("WaypointUpdater received a pose callback")
+        rospy.logwarn(msg)
+
+        lane = Lane()
+        lane.header = std_msgs.msg.Header()
+        lane.header.stamp = rospy.Time.now()
+        rospy.logwarn("About to send lane data")
+        rospy.logwarn(lane)
+
+        self.final_waypoints_pub.publish(lane)
 
     def waypoints_cb(self, waypoints):
         # TODO: Implement
+        # rospy.logwarn("WaypointUpdater received a waypoints callback")
         pass
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        pass
+        rospy.logwarn("WaypointUpdater received a traffic callback")
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
-        pass
+        rospy.logwarn("WaypointUpdater received an obstactle callback")
 
     def get_waypoint_velocity(self, waypoint):
         return waypoint.twist.twist.linear.x
