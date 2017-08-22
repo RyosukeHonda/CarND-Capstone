@@ -8,11 +8,10 @@ class Controller(object):
         # TODO: Implement
         pass
 
-    def control(self, proposed_linear_velocity, proposed_angular_velocity, last_velocity):
+    def control(self, proposed_linear_velocity, proposed_angular_velocity, current_velocity):
 
-        throttle = 1.0 if 0.9 * proposed_linear_velocity > last_velocity.linear.x else 0.0
-        brake = 5.0 if 1.1 * proposed_linear_velocity < last_velocity.linear.x else 0.0
+        throttle = 1.0 if 0.9 * proposed_linear_velocity > current_velocity.linear.x else 0.0
+        brake = 5.0 if 1.1 * proposed_linear_velocity < current_velocity.linear.x else 0.0
 
         # Return throttle, brake, steer
-        # return proposed_linear_velocity, 0., 10 * proposed_angular_velocity
-        return throttle, brake, 0.
+        return throttle, brake, 0

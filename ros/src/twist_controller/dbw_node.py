@@ -1,10 +1,14 @@
 #!/usr/bin/env python
 
+import math
+
 import rospy
 from std_msgs.msg import Bool
 from dbw_mkz_msgs.msg import ThrottleCmd, SteeringCmd, BrakeCmd, SteeringReport
 from geometry_msgs.msg import TwistStamped
-import math
+import geometry_msgs.msg
+import styx_msgs.msg
+
 
 from twist_controller import Controller
 
@@ -31,6 +35,7 @@ that we have created in the `__init__` function.
 
 '''
 
+
 class DBWNode(object):
 
     def __init__(self):
@@ -49,7 +54,8 @@ class DBWNode(object):
 
         self.is_drive_by_wire_enable = False
         self.last_twist_command = None
-        self.last_velocity = None
+        self.current_velocity = None
+        self.current_pose = None
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -65,6 +71,7 @@ class DBWNode(object):
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb)
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.drive_by_wire_enabled_cb)
         rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb)
+        rospy.Subscriber('/current_pose', geometry_msgs.msg.PoseStamped, self.current_pose_cb)
 
         self.loop()
 
@@ -79,24 +86,21 @@ class DBWNode(object):
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
 
-            data = [self.last_twist_command, self.last_velocity]
+            data = [self.last_twist_command, self.current_velocity, self.current_pose]
             is_all_data_availabe = all([x is not None for x in data])
 
             if self.is_drive_by_wire_enable and is_all_data_availabe:
 
                 proposed_linear_velocity = self.last_twist_command.linear.x
-                proposed_angular_velocity = 0
-
-                rospy.logwarn("Last velocity")
-                rospy.logwarn(self.last_velocity)
+                proposed_angular_velocity = self.last_twist_command.angular.z
 
                 # Primitive command
                 throttle, brake, steer = self.controller.control(
-                    proposed_linear_velocity, proposed_angular_velocity, self.last_velocity)
+                    proposed_linear_velocity, proposed_angular_velocity, self.current_velocity)
 
-                rospy.logwarn("Velocity: {}".format(self.last_velocity.linear.x))
-                rospy.logwarn("Throttle: {}".format(throttle))
-                rospy.logwarn("Brake: {}".format(brake))
+                # rospy.logwarn("Throttle: {}".format(throttle))
+                # rospy.logwarn("Brake: {}".format(brake))
+                # rospy.logwarn("Steer: {}".format(steer))
 
                 self.publish(throttle, brake, steer)
 
@@ -133,8 +137,10 @@ class DBWNode(object):
         self.is_drive_by_wire_enable = bool(msg.data)
 
     def current_velocity_cb(self, msg):
+        self.current_velocity = msg.twist
 
-        self.last_velocity = msg.twist
+    def current_pose_cb(self, msg):
+        self.current_pose = msg.pose
 
 
 if __name__ == '__main__':
