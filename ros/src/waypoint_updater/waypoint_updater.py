@@ -38,26 +38,31 @@ class WaypointUpdater(object):
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
+        self.last_base_waypoints_lane = None
 
         rospy.spin()
 
     def pose_cb(self, msg):
+
         # TODO: Implement
-        rospy.logwarn("WaypointUpdater received a pose callback")
-        rospy.logwarn(msg)
+        if self.last_base_waypoints_lane is not None:
 
-        lane = Lane()
-        lane.header = std_msgs.msg.Header()
-        lane.header.stamp = rospy.Time.now()
-        rospy.logwarn("About to send lane data")
-        rospy.logwarn(lane)
+            rospy.logwarn("WaypointUpdater received a pose callback")
+            rospy.logwarn(msg)
 
-        self.final_waypoints_pub.publish(lane)
+            waypoints = self.last_base_waypoints_lane.waypoints
 
-    def waypoints_cb(self, waypoints):
+            lane = self.last_base_waypoints_lane
+            # lane.header = std_msgs.msg.Header()
+            # lane.header.stamp = rospy.Time.now()
+            # lane.waypoints = self.waypoints
+
+            self.final_waypoints_pub.publish(lane)
+
+    def waypoints_cb(self, lane):
         # TODO: Implement
         # rospy.logwarn("WaypointUpdater received a waypoints callback")
-        pass
+        self.last_base_waypoints_lane = lane
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement

@@ -54,9 +54,10 @@ class DBWNode(object):
                                          BrakeCmd, queue_size=1)
 
         # TODO: Create `TwistController` object
-        # self.controller = TwistController(<Arguments you wish to provide>)
+        self.controller = Controller()
 
         # TODO: Subscribe to all the topics you need to
+        rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb)
 
         self.loop()
 
@@ -91,6 +92,12 @@ class DBWNode(object):
         bcmd.pedal_cmd_type = BrakeCmd.CMD_TORQUE
         bcmd.pedal_cmd = brake
         self.brake_pub.publish(bcmd)
+
+    def twist_commands_cb(self, msg):
+
+        rospy.logwarn("Received twist command!")
+        rospy.logwarn(type(msg))
+        rospy.logwarn(msg)
 
 
 if __name__ == '__main__':
