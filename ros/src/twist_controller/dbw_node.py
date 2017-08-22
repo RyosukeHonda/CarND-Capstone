@@ -49,6 +49,7 @@ class DBWNode(object):
 
         self.is_drive_by_wire_enable = False
         self.last_twist_command = None
+        self.last_velocity = None
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -63,11 +64,12 @@ class DBWNode(object):
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb)
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.drive_by_wire_enabled_cb)
+        rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb)
 
         self.loop()
 
     def loop(self):
-        rate = rospy.Rate(50) # 50Hz
+        rate = rospy.Rate(10) # 50Hz
         while not rospy.is_shutdown():
             # TODO: Get predicted throttle, brake, and steering using `twist_controller`
             # You should only publish the control commands if dbw is enabled
@@ -76,14 +78,25 @@ class DBWNode(object):
             #                                                     <current linear velocity>,
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
-            if self.is_drive_by_wire_enable and self.last_twist_command is not None:
+
+            data = [self.last_twist_command, self.last_velocity]
+            is_all_data_availabe = all([x is not None for x in data])
+
+            if self.is_drive_by_wire_enable and is_all_data_availabe:
 
                 proposed_linear_velocity = self.last_twist_command.linear.x
-                proposed_angular_velocity = self.last_twist_command.angular.z
+                proposed_angular_velocity = 0
+
+                rospy.logwarn("Last velocity")
+                rospy.logwarn(self.last_velocity)
 
                 # Primitive command
                 throttle, brake, steer = self.controller.control(
-                    proposed_linear_velocity, proposed_angular_velocity)
+                    proposed_linear_velocity, proposed_angular_velocity, self.last_velocity)
+
+                rospy.logwarn("Velocity: {}".format(self.last_velocity.linear.x))
+                rospy.logwarn("Throttle: {}".format(throttle))
+                rospy.logwarn("Brake: {}".format(brake))
 
                 self.publish(throttle, brake, steer)
 
@@ -118,6 +131,10 @@ class DBWNode(object):
     def drive_by_wire_enabled_cb(self, msg):
 
         self.is_drive_by_wire_enable = bool(msg.data)
+
+    def current_velocity_cb(self, msg):
+
+        self.last_velocity = msg.twist
 
 
 if __name__ == '__main__':

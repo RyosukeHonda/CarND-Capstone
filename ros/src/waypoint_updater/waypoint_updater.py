@@ -25,6 +25,8 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 
 LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
 
+miles_per_hour_to_metres_per_second = 0.44704
+
 
 class WaypointUpdater(object):
     def __init__(self):
@@ -58,6 +60,10 @@ class WaypointUpdater(object):
 
             lane.waypoints = waypoints_helper.get_sublist(
                 base_waypoints, start_index, LOOKAHEAD_WPS)
+
+            for index in range(len(lane.waypoints)):
+
+                lane.waypoints[index].twist.twist.linear.x = 40 * miles_per_hour_to_metres_per_second
 
             self.final_waypoints_pub.publish(lane)
 
