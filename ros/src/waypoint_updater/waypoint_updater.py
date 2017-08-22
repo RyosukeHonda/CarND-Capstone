@@ -32,8 +32,6 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
-        rospy.logwarn("WaypointUpdater starting!!!!")
-
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
         rospy.Subscriber('/base_waypoints', Lane, self.base_waypoints_cb)
 
@@ -57,9 +55,7 @@ class WaypointUpdater(object):
             lane.header.stamp = rospy.Time.now()
 
             start_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
-
-            lane.waypoints = waypoints_helper.get_sublist(
-                base_waypoints, start_index, LOOKAHEAD_WPS)
+            lane.waypoints = waypoints_helper.get_sublist(base_waypoints, start_index, LOOKAHEAD_WPS)
 
             for index in range(len(lane.waypoints)):
 
@@ -73,11 +69,11 @@ class WaypointUpdater(object):
 
     def traffic_cb(self, msg):
         # TODO: Callback for /traffic_waypoint message. Implement
-        rospy.logwarn("WaypointUpdater received a traffic callback")
+        pass
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
-        rospy.logwarn("WaypointUpdater received an obstactle callback")
+        pass
 
     def get_waypoint_velocity(self, waypoint):
         return waypoint.twist.twist.linear.x

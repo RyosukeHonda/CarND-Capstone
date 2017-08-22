@@ -93,6 +93,12 @@ class DBWNode(object):
 
             if self.is_drive_by_wire_enable and is_all_data_availabe:
 
+                rospy.logwarn("Current position")
+                rospy.logwarn(self.current_pose.position)
+
+                rospy.logwarn("First final wyapoint")
+                rospy.logwarn(self.final_waypoints[0].pose.pose.position)
+
                 proposed_linear_velocity = self.last_twist_command.linear.x
                 proposed_angular_velocity = self.last_twist_command.angular.z
 

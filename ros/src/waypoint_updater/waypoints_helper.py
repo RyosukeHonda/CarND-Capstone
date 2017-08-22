@@ -54,5 +54,5 @@ def get_sublist(elements, start_index, size):
     """
 
     # A very simple, not necessarily efficient solution
-    doubled_elements = elements + elements
+    doubled_elements = elements + elements[:size]
     return doubled_elements[start_index: start_index + size]
