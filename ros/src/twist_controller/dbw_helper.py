@@ -20,3 +20,34 @@ def get_polynomial_fit(waypoints, degree):
 
     # Numpy returns coefficients with highest degree first, but we want them in opposite order
     return list(reversed(coefficients))
+
+
+def evaluate_polynomial(coefficients, x):
+    """
+    Given polynomial coefficients, evaluate polynomial at point x
+    :param coefficients:
+    :param x:
+    :return:
+    """
+
+    y = 0
+
+    for power, coefficient in enumerate(coefficients):
+
+        y += coefficient * (x ** power)
+
+    return y
+
+
+def get_cross_track_error(waypoints, current_pose):
+    """
+    Given waypoints ahead of the car, fist polynomial to them, estimates expected y at current x pose and compares
+    that to actual y to compute cross track error - a deviation from expected trajectory
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param current_pose: geometry_msgs.msgs.Pose instance
+    :return: float
+    """
+
+    degree = 2
+    coefficients = get_polynomial_fit(waypoints, degree)
+

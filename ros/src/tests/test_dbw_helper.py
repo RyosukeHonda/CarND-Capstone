@@ -52,3 +52,25 @@ def test_get_polynomial_fit_straight_line_with_nonzero_slope():
     actual = dbw_helper.get_polynomial_fit(waypoints, degree)
 
     assert np.allclose(expected, actual)
+
+
+def test_evaluate_polynomial_first_order():
+
+    coefficients = [2.5, 4.2]
+    x = 1
+
+    expected = 6.7
+    actual = dbw_helper.evaluate_polynomial(coefficients, x)
+
+    assert expected == actual
+
+
+def test_evaluate_polynomial_second_order():
+
+    coefficients = [2.5, 4.2, -1.2]
+    x = 2
+
+    expected = 6.1
+    actual = dbw_helper.evaluate_polynomial(coefficients, x)
+
+    assert np.isclose(expected, actual)
