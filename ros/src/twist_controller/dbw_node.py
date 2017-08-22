@@ -32,6 +32,7 @@ that we have created in the `__init__` function.
 '''
 
 class DBWNode(object):
+
     def __init__(self):
         rospy.init_node('dbw_node')
 
@@ -46,6 +47,8 @@ class DBWNode(object):
         max_lat_accel = rospy.get_param('~max_lat_accel', 3.)
         max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
 
+        self.is_drive_by_wire_enable = False
+
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
         self.throttle_pub = rospy.Publisher('/vehicle/throttle_cmd',
@@ -58,6 +61,7 @@ class DBWNode(object):
 
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb)
+        rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.drive_by_wire_enabled_cb)
 
         self.loop()
 
@@ -71,8 +75,13 @@ class DBWNode(object):
             #                                                     <current linear velocity>,
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
-            # if <dbw is enabled>:
+            if self.is_drive_by_wire_enable:
+                pass
             #   self.publish(throttle, brake, steer)
+            else:
+                # Probably should reset PID parameters or similar
+                pass
+
             rate.sleep()
 
     def publish(self, throttle, brake, steer):
@@ -95,9 +104,15 @@ class DBWNode(object):
 
     def twist_commands_cb(self, msg):
 
-        rospy.logwarn("Received twist command!")
-        rospy.logwarn(type(msg))
-        rospy.logwarn(msg)
+        pass
+
+        # rospy.logwarn("Received twist command!")
+        # rospy.logwarn(type(msg))
+        # rospy.logwarn(msg)
+
+    def drive_by_wire_enabled_cb(self, msg):
+
+        self.is_drive_by_wire_enable = bool(msg.data)
 
 
 if __name__ == '__main__':

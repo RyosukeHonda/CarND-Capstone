@@ -47,9 +47,6 @@ class WaypointUpdater(object):
         # TODO: Implement
         if self.last_base_waypoints_lane is not None:
 
-            rospy.logwarn("WaypointUpdater received a pose callback")
-            rospy.logwarn(msg)
-
             waypoints = self.last_base_waypoints_lane.waypoints
 
             lane = self.last_base_waypoints_lane
