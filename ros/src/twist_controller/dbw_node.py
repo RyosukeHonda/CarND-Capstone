@@ -56,6 +56,7 @@ class DBWNode(object):
         self.last_twist_command = None
         self.current_velocity = None
         self.current_pose = None
+        self.final_waypoints = None
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -70,8 +71,9 @@ class DBWNode(object):
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb)
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.drive_by_wire_enabled_cb)
-        rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb)
-        rospy.Subscriber('/current_pose', geometry_msgs.msg.PoseStamped, self.current_pose_cb)
+        rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb, queue_size=1)
+        rospy.Subscriber('/current_pose', geometry_msgs.msg.PoseStamped, self.current_pose_cb, queue_size=1)
+        rospy.Subscriber('/final_waypoints', styx_msgs.msg.Lane, self.final_waypoints_cb)
 
         self.loop()
 
@@ -86,7 +88,7 @@ class DBWNode(object):
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
 
-            data = [self.last_twist_command, self.current_velocity, self.current_pose]
+            data = [self.last_twist_command, self.current_velocity, self.current_pose, self.final_waypoints]
             is_all_data_availabe = all([x is not None for x in data])
 
             if self.is_drive_by_wire_enable and is_all_data_availabe:
@@ -141,6 +143,9 @@ class DBWNode(object):
 
     def current_pose_cb(self, msg):
         self.current_pose = msg.pose
+
+    def final_waypoints_cb(self, msg):
+        self.final_waypoints = msg.waypoints
 
 
 if __name__ == '__main__':
