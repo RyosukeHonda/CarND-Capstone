@@ -5,14 +5,20 @@ ONE_MPH = 0.44704
 
 class Controller(object):
 
-    def __init__(self, steering_pid):
+    def __init__(self, throttle_pid, steering_pid):
 
+        self.throttle_pid = throttle_pid
         self.steering_pid = steering_pid
 
-    def control(self, proposed_linear_velocity, current_velocity, cross_track_error, sample_time):
+    def control(self, linear_velocity_error, cross_track_error, sample_time):
 
-        throttle = 1.0 if 0.9 * proposed_linear_velocity > current_velocity.linear.x else 0.0
-        brake = 5.0 if 1.1 * proposed_linear_velocity < current_velocity.linear.x else 0.0
+        throttle = self.throttle_pid.step(linear_velocity_error, sample_time)
+        brake = 0
+
+        if throttle < 0:
+
+            brake = throttle
+            throttle = 0
 
         steer = self.steering_pid.step(cross_track_error, sample_time)
 
