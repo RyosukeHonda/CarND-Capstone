@@ -61,8 +61,8 @@ class WaypointUpdater(object):
             lane = Lane()
             lane.header.stamp = rospy.Time.now()
 
-            # start_index = self.get_closest_waypoint_index(pose, base_waypoints)
             start_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
+            rospy.logwarn("Start index is: {}".format(start_index))
 
             lane.waypoints = base_waypoints[start_index: start_index + LOOKAHEAD_WPS]
 
