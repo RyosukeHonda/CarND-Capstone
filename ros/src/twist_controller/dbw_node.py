@@ -76,8 +76,12 @@ class DBWNode(object):
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
             if self.is_drive_by_wire_enable:
-                pass
-            #   self.publish(throttle, brake, steer)
+
+                throttle = 1
+                brake = 0
+                steer = 0
+                self.publish(throttle, brake, steer)
+                
             else:
                 # Probably should reset PID parameters or similar
                 pass
