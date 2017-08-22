@@ -60,8 +60,8 @@ class DBWNode(object):
         self.final_waypoints = None
         self.previous_loop_time = rospy.get_rostime()
 
-        self.steering_pid = pid.PID(kp=0.1, ki=0.002, kd=2.0)
-        self.throttle_pid = pid.PID(kp=0.1, ki=0.002, kd=2.0)
+        self.throttle_pid = pid.PID(kp=0.5, ki=0, kd=0, mn=decel_limit, mx=accel_limit)
+        self.steering_pid = pid.PID(kp=0.2, ki=0.002, kd=1.0)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -103,15 +103,15 @@ class DBWNode(object):
                 duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
                 self.previous_loop_time = current_time
 
-                linear_velocity_error = self.last_twist_command.linear.x - self.current_velocity.linear.x
+                linear_velocity_error = self.final_waypoints[0].twist.twist.linear.x - self.current_velocity.linear.x
                 cross_track_error = -dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
 
                 # Primitive command
                 throttle, brake, steer = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
 
-                # rospy.logwarn("Throttle: {}".format(throttle))
-                # rospy.logwarn("Brake: {}".format(brake))
+                rospy.logwarn("Throttle: {}".format(throttle))
+                rospy.logwarn("Brake: {}".format(brake))
                 # rospy.logwarn("Steer: {}".format(steer))
 
                 self.publish(throttle, brake, steer)
