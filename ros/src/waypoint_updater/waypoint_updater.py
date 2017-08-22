@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import math
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
@@ -47,24 +48,16 @@ class WaypointUpdater(object):
         # TODO: Implement
         if self.last_base_waypoints_lane is not None:
 
-            base_waypoints = self.last_base_waypoints_lane.waypoints
-
             pose = msg.pose
-
-            # rospy.logwarn("Pose: {}".format(pose))
-
-            # lane = self.last_base_waypoints_lane
-            # lane.header = std_msgs.msg.Header()
-            # lane.header.stamp = rospy.Time.now()
-            # lane.waypoints = self.waypoints
+            base_waypoints = self.last_base_waypoints_lane.waypoints
 
             lane = Lane()
             lane.header.stamp = rospy.Time.now()
 
             start_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
-            rospy.logwarn("Start index is: {}".format(start_index))
 
-            lane.waypoints = base_waypoints[start_index: start_index + LOOKAHEAD_WPS]
+            lane.waypoints = waypoints_helper.get_sublist(
+                base_waypoints, start_index, LOOKAHEAD_WPS)
 
             self.final_waypoints_pub.publish(lane)
 
@@ -93,13 +86,6 @@ class WaypointUpdater(object):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
         return dist
-
-    # def get_closest_waypoint_index(self, pose, waypoints):
-    #
-    #     best_index = 0
-    #
-    #     # for index, waypoint in enumerate(waypoints):
-    #     return best_index
 
 if __name__ == '__main__':
     try:

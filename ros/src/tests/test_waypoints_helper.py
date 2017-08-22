@@ -46,3 +46,27 @@ def test_get_closest_waypoint_index():
     waypoints = [first_waypoint, second_waypoint, third_waypoint]
 
     assert 1 == waypoints_helper.get_closest_waypoint_index(pose, waypoints)
+
+
+def test_get_sublist_simple():
+
+    elements = [1, 2, 3, 4, 5]
+    start_index = 1
+    size = 2
+
+    expected = [2, 3]
+    actual = waypoints_helper.get_sublist(elements, start_index, size)
+
+    assert expected == actual
+
+
+def test_get_sublist_wrapped():
+
+    elements = [1, 2, 3, 4, 5]
+    start_index = 3
+    size = 3
+
+    expected = [4, 5, 1]
+    actual = waypoints_helper.get_sublist(elements, start_index, size)
+
+    assert expected == actual

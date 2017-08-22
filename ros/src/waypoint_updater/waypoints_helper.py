@@ -42,3 +42,17 @@ def get_closest_waypoint_index(pose, waypoints):
     return best_index
 
 
+def get_sublist(elements, start_index, size):
+    """
+    Given a list of elements, start index and size of sublist, returns
+    sublist starting from start_index that has size elements. Takes care of wrapping around should
+    start_index + size > len(elements)
+    :param elements: list
+    :param start_index: start index
+    :param size: size of sublist
+    :return: sublist, wrapped around beginning of elements list if necessary
+    """
+
+    # A very simple, not necessarily efficient solution
+    doubled_elements = elements + elements
+    return doubled_elements[start_index: start_index + size]
