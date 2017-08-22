@@ -48,6 +48,7 @@ class DBWNode(object):
         max_steer_angle = rospy.get_param('~max_steer_angle', 8.)
 
         self.is_drive_by_wire_enable = False
+        self.last_twist_command = None
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -75,13 +76,17 @@ class DBWNode(object):
             #                                                     <current linear velocity>,
             #                                                     <dbw status>,
             #                                                     <any other argument you need>)
-            if self.is_drive_by_wire_enable:
+            if self.is_drive_by_wire_enable and self.last_twist_command is not None:
 
-                throttle = 1
-                brake = 0
-                steer = 0
+                proposed_linear_velocity = self.last_twist_command.linear.x
+                proposed_angular_velocity = self.last_twist_command.angular.z
+
+                # Primitive command
+                throttle, brake, steer = self.controller.control(
+                    proposed_linear_velocity, proposed_angular_velocity)
+
                 self.publish(throttle, brake, steer)
-                
+
             else:
                 # Probably should reset PID parameters or similar
                 pass
@@ -108,11 +113,7 @@ class DBWNode(object):
 
     def twist_commands_cb(self, msg):
 
-        pass
-
-        # rospy.logwarn("Received twist command!")
-        # rospy.logwarn(type(msg))
-        # rospy.logwarn(msg)
+        self.last_twist_command = msg.twist
 
     def drive_by_wire_enabled_cb(self, msg):
 

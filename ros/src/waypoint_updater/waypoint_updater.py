@@ -5,7 +5,7 @@ from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 import std_msgs.msg
 
-import math
+import waypoints_helper
 
 '''
 This node will publish waypoints from the car's current position to some `x` distance ahead.
@@ -32,7 +32,7 @@ class WaypointUpdater(object):
         rospy.logwarn("WaypointUpdater starting!!!!")
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb)
-        rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb)
+        rospy.Subscriber('/base_waypoints', Lane, self.base_waypoints_cb)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
@@ -47,18 +47,29 @@ class WaypointUpdater(object):
         # TODO: Implement
         if self.last_base_waypoints_lane is not None:
 
-            waypoints = self.last_base_waypoints_lane.waypoints
+            base_waypoints = self.last_base_waypoints_lane.waypoints
 
-            lane = self.last_base_waypoints_lane
+            pose = msg.pose
+
+            # rospy.logwarn("Pose: {}".format(pose))
+
+            # lane = self.last_base_waypoints_lane
             # lane.header = std_msgs.msg.Header()
             # lane.header.stamp = rospy.Time.now()
             # lane.waypoints = self.waypoints
 
+            lane = Lane()
+            lane.header.stamp = rospy.Time.now()
+
+            # start_index = self.get_closest_waypoint_index(pose, base_waypoints)
+            start_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
+
+            lane.waypoints = base_waypoints[start_index: start_index + LOOKAHEAD_WPS]
+
             self.final_waypoints_pub.publish(lane)
 
-    def waypoints_cb(self, lane):
+    def base_waypoints_cb(self, lane):
         # TODO: Implement
-        # rospy.logwarn("WaypointUpdater received a waypoints callback")
         self.last_base_waypoints_lane = lane
 
     def traffic_cb(self, msg):
@@ -77,12 +88,18 @@ class WaypointUpdater(object):
 
     def distance(self, waypoints, wp1, wp2):
         dist = 0
-        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2  + (a.z-b.z)**2)
+        dl = lambda a, b: math.sqrt((a.x-b.x)**2 + (a.y-b.y)**2 + (a.z-b.z)**2)
         for i in range(wp1, wp2+1):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
         return dist
 
+    # def get_closest_waypoint_index(self, pose, waypoints):
+    #
+    #     best_index = 0
+    #
+    #     # for index, waypoint in enumerate(waypoints):
+    #     return best_index
 
 if __name__ == '__main__':
     try:
