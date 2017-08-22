@@ -9,8 +9,9 @@ from geometry_msgs.msg import TwistStamped
 import geometry_msgs.msg
 import styx_msgs.msg
 
-
 from twist_controller import Controller
+import dbw_helper
+import pid
 
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
@@ -57,6 +58,9 @@ class DBWNode(object):
         self.current_velocity = None
         self.current_pose = None
         self.final_waypoints = None
+        self.previous_loop_time = rospy.get_rostime()
+
+        self.steering_pid = pid.PID(kp=0.2, ki=0.004, kd=3.0)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -66,7 +70,7 @@ class DBWNode(object):
                                          BrakeCmd, queue_size=1)
 
         # TODO: Create `TwistController` object
-        self.controller = Controller()
+        self.controller = Controller(self.steering_pid)
 
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb)
@@ -93,18 +97,18 @@ class DBWNode(object):
 
             if self.is_drive_by_wire_enable and is_all_data_availabe:
 
-                rospy.logwarn("Current position")
-                rospy.logwarn(self.current_pose.position)
+                current_time = rospy.get_rostime()
+                ros_duration = current_time - self.previous_loop_time
+                duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
+                self.previous_loop_time = current_time
 
-                rospy.logwarn("First final wyapoint")
-                rospy.logwarn(self.final_waypoints[0].pose.pose.position)
+                cross_track_error = dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
 
                 proposed_linear_velocity = self.last_twist_command.linear.x
-                proposed_angular_velocity = self.last_twist_command.angular.z
 
                 # Primitive command
                 throttle, brake, steer = self.controller.control(
-                    proposed_linear_velocity, proposed_angular_velocity, self.current_velocity)
+                    proposed_linear_velocity, self.current_velocity, -cross_track_error, duration_in_seconds)
 
                 # rospy.logwarn("Throttle: {}".format(throttle))
                 # rospy.logwarn("Brake: {}".format(brake))
@@ -143,6 +147,9 @@ class DBWNode(object):
     def drive_by_wire_enabled_cb(self, msg):
 
         self.is_drive_by_wire_enable = bool(msg.data)
+
+        if self.is_drive_by_wire_enable is True:
+            self.steering_pid.reset()
 
     def current_velocity_cb(self, msg):
         self.current_velocity = msg.twist

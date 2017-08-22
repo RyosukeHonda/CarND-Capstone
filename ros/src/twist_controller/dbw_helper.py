@@ -51,3 +51,7 @@ def get_cross_track_error(waypoints, current_pose):
     degree = 2
     coefficients = get_polynomial_fit(waypoints, degree)
 
+    expected_y = evaluate_polynomial(coefficients, current_pose.position.x)
+    actual_y = current_pose.position.y
+
+    return actual_y - expected_y
