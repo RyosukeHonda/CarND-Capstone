@@ -59,7 +59,7 @@ class WaypointUpdater(object):
 
             for index in range(len(lane.waypoints)):
 
-                lane.waypoints[index].twist.twist.linear.x = 40 * miles_per_hour_to_metres_per_second
+                lane.waypoints[index].twist.twist.linear.x = 20.0 * miles_per_hour_to_metres_per_second
 
             self.final_waypoints_pub.publish(lane)
 

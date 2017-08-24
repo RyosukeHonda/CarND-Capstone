@@ -8,10 +8,12 @@ from dbw_mkz_msgs.msg import ThrottleCmd, SteeringCmd, BrakeCmd, SteeringReport
 from geometry_msgs.msg import TwistStamped
 import geometry_msgs.msg
 import styx_msgs.msg
+import std_msgs.msg
 
 from twist_controller import Controller
 import dbw_helper
 import pid
+
 
 '''
 You can build this node only after you have built (or partially built) the `waypoint_updater` node.
@@ -61,7 +63,7 @@ class DBWNode(object):
         self.previous_loop_time = rospy.get_rostime()
 
         self.throttle_pid = pid.PID(kp=0.5, ki=0, kd=0, mn=decel_limit, mx=accel_limit)
-        self.steering_pid = pid.PID(kp=0.2, ki=0.002, kd=1.0)
+        self.steering_pid = pid.PID(kp=1.0, ki=0.00, kd=0.5, mn=-max_steer_angle, mx=max_steer_angle)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -83,7 +85,7 @@ class DBWNode(object):
         self.loop()
 
     def loop(self):
-        rate = rospy.Rate(10) # 50Hz
+        rate = rospy.Rate(10) # Frequency
         while not rospy.is_shutdown():
             # TODO: Get predicted throttle, brake, and steering using `twist_controller`
             # You should only publish the control commands if dbw is enabled
@@ -106,15 +108,23 @@ class DBWNode(object):
                 linear_velocity_error = self.final_waypoints[0].twist.twist.linear.x - self.current_velocity.linear.x
                 cross_track_error = -dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
 
+                if dbw_helper.is_road_more_horizontal_than_vertical(self.final_waypoints) is False:
+
+                    cross_track_error *= -1.0
+
+                rospy.logwarn("Cross track error: {}".format(cross_track_error))
+
+                rospy.logwarn("Is road horizontal: {}".format(
+                    dbw_helper.is_road_more_horizontal_than_vertical(self.final_waypoints)))
+
+                rospy.logwarn("Current position: {}, {}".format(
+                    self.current_pose.position.x, self.current_pose.position.y))
+
                 # Primitive command
-                throttle, brake, steer = self.controller.control(
+                throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
 
-                rospy.logwarn("Throttle: {}".format(throttle))
-                rospy.logwarn("Brake: {}".format(brake))
-                # rospy.logwarn("Steer: {}".format(steer))
-
-                self.publish(throttle, brake, steer)
+                self.publish(throttle, brake, steering)
 
             else:
                 # Probably should reset PID parameters or similar
