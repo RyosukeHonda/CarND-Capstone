@@ -62,8 +62,8 @@ class DBWNode(object):
         self.final_waypoints = None
         self.previous_loop_time = rospy.get_rostime()
 
-        self.throttle_pid = pid.PID(kp=0.5, ki=0, kd=0, mn=decel_limit, mx=accel_limit)
-        self.steering_pid = pid.PID(kp=1.0, ki=0.00, kd=0.5, mn=-max_steer_angle, mx=max_steer_angle)
+        self.throttle_pid = pid.PID(kp=0.5, ki=0.0, kd=0.0, mn=decel_limit, mx=accel_limit)
+        self.steering_pid = pid.PID(kp=1.0, ki=0.001, kd=0.5, mn=-max_steer_angle, mx=max_steer_angle)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
                                          SteeringCmd, queue_size=1)
@@ -76,11 +76,11 @@ class DBWNode(object):
         self.controller = Controller(self.throttle_pid, self.steering_pid)
 
         # TODO: Subscribe to all the topics you need to
-        rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb)
+        rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb, queue_size=1)
         rospy.Subscriber('/vehicle/dbw_enabled', Bool, self.drive_by_wire_enabled_cb)
         rospy.Subscriber('/current_velocity', TwistStamped, self.current_velocity_cb, queue_size=1)
         rospy.Subscriber('/current_pose', geometry_msgs.msg.PoseStamped, self.current_pose_cb, queue_size=1)
-        rospy.Subscriber('/final_waypoints', styx_msgs.msg.Lane, self.final_waypoints_cb)
+        rospy.Subscriber('/final_waypoints', styx_msgs.msg.Lane, self.final_waypoints_cb, queue_size=1)
 
         self.loop()
 
@@ -106,29 +106,15 @@ class DBWNode(object):
                 self.previous_loop_time = current_time
 
                 linear_velocity_error = self.final_waypoints[0].twist.twist.linear.x - self.current_velocity.linear.x
-                cross_track_error = -dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
-
-                if dbw_helper.is_road_more_horizontal_than_vertical(self.final_waypoints) is False:
-
-                    cross_track_error *= -1.0
+                cross_track_error = dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
 
                 rospy.logwarn("Cross track error: {}".format(cross_track_error))
-
-                rospy.logwarn("Is road horizontal: {}".format(
-                    dbw_helper.is_road_more_horizontal_than_vertical(self.final_waypoints)))
-
-                rospy.logwarn("Current position: {}, {}".format(
-                    self.current_pose.position.x, self.current_pose.position.y))
 
                 # Primitive command
                 throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
 
                 self.publish(throttle, brake, steering)
-
-            else:
-                # Probably should reset PID parameters or similar
-                pass
 
             rate.sleep()
 

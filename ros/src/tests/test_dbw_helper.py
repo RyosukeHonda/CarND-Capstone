@@ -55,151 +55,28 @@ def test_evaluate_polynomial_second_order():
     assert np.isclose(expected, actual)
 
 
-def test_get_normalized_angle_normal_range():
+def test_get_waypoints_coordinates_matrix():
 
-    angle = 0.1
+    first_waypoint = styx_msgs.msg.Waypoint()
+    first_waypoint.pose.pose.position.x = 0
+    first_waypoint.pose.pose.position.y = 2
 
-    expected = 0.1
-    actual = dbw_helper.get_normalized_angle(angle)
+    second_waypoint = styx_msgs.msg.Waypoint()
+    second_waypoint.pose.pose.position.x = 8
+    second_waypoint.pose.pose.position.y = 20
 
-    assert np.isclose(expected, actual)
+    third_waypoint = styx_msgs.msg.Waypoint()
+    third_waypoint.pose.pose.position.x = 50
+    third_waypoint.pose.pose.position.y = -4
 
+    waypoints = [first_waypoint, second_waypoint, third_waypoint]
 
-def test_get_normalized_angle_above_normal_rangle():
+    expected = np.array([
+        [0, 2],
+        [8, 20],
+        [50, -4]
+    ])
 
-    angle = 3
+    actual = dbw_helper.get_waypoints_coordinates_matrix(waypoints)
 
-    expected = 3 - np.pi
-    actual = dbw_helper.get_normalized_angle(angle)
-
-    assert np.isclose(expected, actual)
-
-
-def test_get_normalized_angle_below_normal_rangle():
-
-    angle = -2
-
-    expected = -2 + np.pi
-    actual = dbw_helper.get_normalized_angle(angle)
-
-    assert np.isclose(expected, actual)
-
-
-def test_get_arc_angle_positive_90_deg_angle():
-
-    a = geometry_msgs.msg.Pose()
-    a.position.x = 0
-    a.position.y = 10
-
-    b = geometry_msgs.msg.Pose()
-    b.position.x = 0
-    b.position.y = 0
-
-    c = geometry_msgs.msg.Pose()
-    c.position.x = 10
-    c.position.y = 0
-
-    expected = np.pi / 2.0
-    actual = dbw_helper.get_arc_angle(a, b, c)
-
-    assert np.isclose(actual, expected)
-
-
-def test_get_arc_angle_negative_90_deg_angle():
-
-    a = geometry_msgs.msg.Pose()
-    a.position.x = 0
-    a.position.y = -10
-
-    b = geometry_msgs.msg.Pose()
-    b.position.x = 0
-    b.position.y = 0
-
-    c = geometry_msgs.msg.Pose()
-    c.position.x = 10
-    c.position.y = 0
-
-    expected = -np.pi / 2.0
-    actual = dbw_helper.get_arc_angle(a, b, c)
-
-    assert np.isclose(actual, expected)
-
-
-def test_get_arc_angle_positive_30_deg_angle_b_at_origin():
-
-    a = geometry_msgs.msg.Pose()
-    a.position.x = 10
-    a.position.y = 17.32
-
-    b = geometry_msgs.msg.Pose()
-    b.position.x = 0
-    b.position.y = 0
-
-    c = geometry_msgs.msg.Pose()
-    c.position.x = 10
-    c.position.y = 5.77
-
-    expected = np.pi / 6.0
-    actual = dbw_helper.get_arc_angle(a, b, c)
-
-    assert np.isclose(actual, expected, atol=0.01)
-
-
-def test_get_arc_angle_positive_30_deg_angle_b_shifted_from_origin():
-
-    a = geometry_msgs.msg.Pose()
-    a.position.x = 15
-    a.position.y = 27.32
-
-    b = geometry_msgs.msg.Pose()
-    b.position.x = 5
-    b.position.y = 10
-
-    c = geometry_msgs.msg.Pose()
-    c.position.x = 15
-    c.position.y = 15.77
-
-    expected = np.pi / 6.0
-    actual = dbw_helper.get_arc_angle(a, b, c)
-
-    assert np.isclose(actual, expected, atol=0.01)
-
-
-def test_get_arc_angle_negative_30_deg_angle_b_at_origin():
-
-    a = geometry_msgs.msg.Pose()
-    a.position.x = 10
-    a.position.y = -17.32
-
-    b = geometry_msgs.msg.Pose()
-    b.position.x = 0
-    b.position.y = 0
-
-    c = geometry_msgs.msg.Pose()
-    c.position.x = 10
-    c.position.y = -5.77
-
-    expected = -np.pi / 6.0
-    actual = dbw_helper.get_arc_angle(a, b, c)
-
-    assert np.isclose(actual, expected, atol=0.01)
-
-
-def test_get_arc_angle_negative_30_deg_angle_b_shifted_from_origin():
-
-    a = geometry_msgs.msg.Pose()
-    a.position.x = -10
-    a.position.y = -27.32
-
-    b = geometry_msgs.msg.Pose()
-    b.position.x = -20
-    b.position.y = -10
-
-    c = geometry_msgs.msg.Pose()
-    c.position.x = -10
-    c.position.y = -15.77
-
-    expected = -np.pi / 6.0
-    actual = dbw_helper.get_arc_angle(a, b, c)
-
-    assert np.isclose(actual, expected, atol=0.01)
+    assert np.all(expected == actual)
