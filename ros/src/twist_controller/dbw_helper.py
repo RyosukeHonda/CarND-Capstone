@@ -75,3 +75,46 @@ def is_road_more_horizontal_than_vertical(waypoints):
     last_y = waypoints[-1].pose.pose.position.y
 
     return abs(first_x - last_x) > abs(first_y - last_y)
+
+
+def get_normalized_angle(angle):
+    """
+    Returns angle in range <-pi,+pi>
+    :param angle: angle in radians
+    :return: angle in radians
+    """
+
+    normalized_angle = angle
+
+    while normalized_angle < -np.pi / 2.0:
+        normalized_angle += np.pi
+
+    while normalized_angle > np.pi / 2.0:
+        normalized_angle -= np.pi
+
+    return normalized_angle
+
+
+def get_arc_angle(a, b, c):
+    """
+    Given an arc formed by points a, b, c, return angle of that arc.
+    Angle increases counterclockwise from leg b-c to b-a.
+    :param a: geometry_msgs.msgs.Pose instance
+    :param b: geometry_msgs.msgs.Pose instance
+    :param c: geometry_msgs.msgs.Pose instance
+    :return: float, angle in radians, normalized to <-pi,+pi> rangle
+    """
+
+    # Move points so that b is at origin
+    a_x = a.position.x - b.position.x
+    a_y = a.position.y - b.position.y
+
+    c_x = c.position.x - b.position.x
+    c_y = c.position.y - b.position.y
+
+    a_angle = np.arctan2(a_y, a_x)
+    c_angle = np.arctan2(c_y, c_x)
+
+    arc_angle = a_angle - c_angle
+
+    return get_normalized_angle(arc_angle)
