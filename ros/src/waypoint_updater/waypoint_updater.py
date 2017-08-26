@@ -72,9 +72,9 @@ class WaypointUpdater(object):
 
                 traffic_light_id = self.upcoming_traffic_light_waypoint_id - car_waypoint_index
 
-                for index in range(traffic_light_id):
+                for index in range(len(lane.waypoints)):
 
-                    lane.waypoints[index].twist.twist.linear.x = 0
+                    lane.waypoints[index].twist.twist.linear.x = -100
 
             self.final_waypoints_pub.publish(lane)
 
@@ -90,8 +90,9 @@ class WaypointUpdater(object):
 
     def is_traffic_light_message_stale(self):
 
-        difference = rospy.get_rostime() - self.last_upcoming_traffic_light_message_time
-        return difference.secs > 1
+        ros_duration = rospy.get_rostime() - self.last_upcoming_traffic_light_message_time
+        duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
+        return duration_in_seconds > 0.5
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
