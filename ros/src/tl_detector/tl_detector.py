@@ -72,7 +72,9 @@ class TLDetector(object):
                 light_waypoint_index = tf_helper.get_closest_waypoint_index(light.pose.pose, self.waypoints)
                 distance = tf_helper.get_distance_between_points(self.car_pose.position, light.pose.pose.position)
 
-                if light_waypoint_index > car_waypoint_index and distance < 50:
+                look_ahead_distance = 40
+
+                if light_waypoint_index > car_waypoint_index and distance < look_ahead_distance:
 
                     self.upcoming_red_light_pub.publish(light_waypoint_index)
 
