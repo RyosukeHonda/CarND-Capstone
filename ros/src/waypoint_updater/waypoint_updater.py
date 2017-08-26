@@ -54,6 +54,9 @@ class WaypointUpdater(object):
             lane = Lane()
             lane.header.stamp = rospy.Time.now()
 
+            # start_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
+            # lane.waypoints = waypoints_helper.get_sublist(base_waypoints, start_index, LOOKAHEAD_WPS)
+
             start_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
             lane.waypoints = waypoints_helper.get_sublist(base_waypoints, start_index, LOOKAHEAD_WPS)
 
