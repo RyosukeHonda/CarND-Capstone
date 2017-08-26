@@ -108,11 +108,14 @@ class DBWNode(object):
                 linear_velocity_error = self.final_waypoints[0].twist.twist.linear.x - self.current_velocity.linear.x
                 cross_track_error = dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
 
-                rospy.logwarn("Cross track error: {}".format(cross_track_error))
+                # rospy.logwarn("Cross track error: {}".format(cross_track_error))
 
                 # Primitive command
                 throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
+
+                rospy.logwarn("Throttle command: {}".format(throttle))
+                rospy.logwarn("Brake command: {}".format(brake))
 
                 self.publish(throttle, brake, steering)
 

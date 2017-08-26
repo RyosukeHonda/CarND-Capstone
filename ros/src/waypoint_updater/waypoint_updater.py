@@ -36,10 +36,14 @@ class WaypointUpdater(object):
         rospy.Subscriber('/base_waypoints', Lane, self.base_waypoints_cb, queue_size=1)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
+        rospy.Subscriber('/traffic_waypoint', std_msgs.msg.Int32, self.traffic_cb, queue_size=1)
+
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
         self.last_base_waypoints_lane = None
+        self.upcoming_traffic_light_waypoint_id = None
+        self.last_upcoming_traffic_light_message_time = None
 
         rospy.spin()
 
@@ -54,12 +58,23 @@ class WaypointUpdater(object):
             lane = Lane()
             lane.header.stamp = rospy.Time.now()
 
-            start_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
-            lane.waypoints = waypoints_helper.get_sublist(base_waypoints, start_index, LOOKAHEAD_WPS)
+            car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
+            lane.waypoints = waypoints_helper.get_sublist(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS)
 
             for index in range(len(lane.waypoints)):
 
                 lane.waypoints[index].twist.twist.linear.x = 20.0 * miles_per_hour_to_metres_per_second
+
+            is_red_light_ahed = self.upcoming_traffic_light_waypoint_id is not None and \
+                self.upcoming_traffic_light_waypoint_id > car_waypoint_index
+
+            if is_red_light_ahed and not self.is_traffic_light_message_stale():
+
+                traffic_light_id = self.upcoming_traffic_light_waypoint_id - car_waypoint_index
+
+                for index in range(traffic_light_id):
+
+                    lane.waypoints[index].twist.twist.linear.x = 0
 
             self.final_waypoints_pub.publish(lane)
 
@@ -68,8 +83,15 @@ class WaypointUpdater(object):
         self.last_base_waypoints_lane = lane
 
     def traffic_cb(self, msg):
+
         # TODO: Callback for /traffic_waypoint message. Implement
-        pass
+        self.upcoming_traffic_light_waypoint_id = msg.data
+        self.last_upcoming_traffic_light_message_time = rospy.get_rostime()
+
+    def is_traffic_light_message_stale(self):
+
+        difference = rospy.get_rostime() - self.last_upcoming_traffic_light_message_time
+        return difference.secs > 1
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
