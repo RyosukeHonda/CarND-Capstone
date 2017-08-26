@@ -61,24 +61,20 @@ class TLDetector(object):
         self.lights = msg.lights
 
         arguments = [self.car_pose, self.waypoints]
-
         are_arguments_defined = all([x is not None for x in arguments])
 
         if are_arguments_defined:
 
             car_waypoint_index = tf_helper.get_closest_waypoint_index(self.car_pose, self.waypoints)
 
-            lights_ahead = []
-
             for light_id, light in enumerate(self.lights):
 
-                index = tf_helper.get_closest_waypoint_index(light.pose.pose, self.waypoints)
+                light_waypoint_index = tf_helper.get_closest_waypoint_index(light.pose.pose, self.waypoints)
+                distance = tf_helper.get_distance_between_points(self.car_pose.position, light.pose.pose.position)
 
-                if index > car_waypoint_index:
+                if light_waypoint_index > car_waypoint_index and distance < 50:
 
-                    lights_ahead.append(light_id)
-
-            rospy.logwarn("Lights ahead of car: {}".format(lights_ahead))
+                    self.upcoming_red_light_pub.publish(light_waypoint_index)
 
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index
