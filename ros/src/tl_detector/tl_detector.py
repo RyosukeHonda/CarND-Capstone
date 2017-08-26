@@ -49,6 +49,9 @@ class TLDetector(object):
         self.last_wp = -1
         self.state_count = 0
 
+        self.last_reported_traffic_light_id = None
+        self.last_reported_traffic_light_time = None
+
         rospy.spin()
 
     def pose_cb(self, msg):
@@ -72,11 +75,20 @@ class TLDetector(object):
                 light_waypoint_index = tf_helper.get_closest_waypoint_index(light.pose.pose, self.waypoints)
                 distance = tf_helper.get_distance_between_points(self.car_pose.position, light.pose.pose.position)
 
-                look_ahead_distance = 40
+                look_ahead_distance = 50
 
                 if light_waypoint_index > car_waypoint_index and distance < look_ahead_distance:
 
-                    self.upcoming_red_light_pub.publish(light_waypoint_index)
+                    if light_id != self.last_reported_traffic_light_id:
+
+                        self.upcoming_red_light_pub.publish(light_waypoint_index)
+
+                        self.last_reported_traffic_light_id = light_id
+                        self.last_reported_traffic_light_time = rospy.get_rostime()
+
+                    elif rospy.get_rostime().secs - self.last_reported_traffic_light_time.secs < 5:
+
+                        self.upcoming_red_light_pub.publish(light_waypoint_index)
 
     def image_cb(self, msg):
         """Identifies red lights in the incoming camera image and publishes the index

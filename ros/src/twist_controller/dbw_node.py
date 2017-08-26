@@ -114,6 +114,9 @@ class DBWNode(object):
                 throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
 
+                rospy.logwarn("Throttle command: {}".format(throttle))
+                rospy.logwarn("Brake command: {}".format(brake))
+
                 self.publish(throttle, brake, steering)
 
             rate.sleep()

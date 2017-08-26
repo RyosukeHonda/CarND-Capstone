@@ -43,6 +43,7 @@ class WaypointUpdater(object):
         # TODO: Add other member variables you need below
         self.last_base_waypoints_lane = None
         self.upcoming_traffic_light_waypoint_id = None
+        self.last_upcoming_traffic_light_message_time = None
 
         rospy.spin()
 
@@ -67,7 +68,7 @@ class WaypointUpdater(object):
             is_red_light_ahed = self.upcoming_traffic_light_waypoint_id is not None and \
                 self.upcoming_traffic_light_waypoint_id > car_waypoint_index
 
-            if is_red_light_ahed:
+            if is_red_light_ahed and not self.is_traffic_light_message_stale():
 
                 traffic_light_id = self.upcoming_traffic_light_waypoint_id - car_waypoint_index
 
@@ -85,6 +86,12 @@ class WaypointUpdater(object):
 
         # TODO: Callback for /traffic_waypoint message. Implement
         self.upcoming_traffic_light_waypoint_id = msg.data
+        self.last_upcoming_traffic_light_message_time = rospy.get_rostime()
+
+    def is_traffic_light_message_stale(self):
+
+        difference = rospy.get_rostime() - self.last_upcoming_traffic_light_message_time
+        return difference.secs > 1
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later
