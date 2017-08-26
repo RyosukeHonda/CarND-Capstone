@@ -79,6 +79,7 @@ class TLDetector(object):
 
                 if light_waypoint_index > car_waypoint_index and distance < look_ahead_distance:
 
+                    # Report all lights, but only for some specified time
                     if light_id != self.last_reported_traffic_light_id:
 
                         self.upcoming_red_light_pub.publish(light_waypoint_index)
@@ -86,7 +87,7 @@ class TLDetector(object):
                         self.last_reported_traffic_light_id = light_id
                         self.last_reported_traffic_light_time = rospy.get_rostime()
 
-                    elif rospy.get_rostime().secs - self.last_reported_traffic_light_time.secs < 5:
+                    elif rospy.get_rostime().secs - self.last_reported_traffic_light_time.secs < 10:
 
                         self.upcoming_red_light_pub.publish(light_waypoint_index)
 

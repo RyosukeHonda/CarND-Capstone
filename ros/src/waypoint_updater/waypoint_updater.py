@@ -63,7 +63,7 @@ class WaypointUpdater(object):
 
             for index in range(len(lane.waypoints)):
 
-                lane.waypoints[index].twist.twist.linear.x = 20.0 * miles_per_hour_to_metres_per_second
+                lane.waypoints[index].twist.twist.linear.x = 10.0 * miles_per_hour_to_metres_per_second
 
             is_red_light_ahed = self.upcoming_traffic_light_waypoint_id is not None and \
                 self.upcoming_traffic_light_waypoint_id > car_waypoint_index
@@ -72,9 +72,9 @@ class WaypointUpdater(object):
 
                 traffic_light_id = self.upcoming_traffic_light_waypoint_id - car_waypoint_index
 
-                for index in range(traffic_light_id):
+                for index in range(len(lane.waypoints)):
 
-                    lane.waypoints[index].twist.twist.linear.x = 0
+                    lane.waypoints[index].twist.twist.linear.x = -100
 
             self.final_waypoints_pub.publish(lane)
 
