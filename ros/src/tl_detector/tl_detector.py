@@ -8,9 +8,11 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
 from light_classification.tl_classifier import TLClassifier
 import tf
+import tf.transformations
 import cv2
 from traffic_light_config import config
 import tf_helper
+import numpy as np
 
 
 STATE_COUNT_THRESHOLD = 3
@@ -115,20 +117,27 @@ class TLDetector(object):
 
             # self.has_image = True
 
-            # self.camera_image = msg
-            # self.camera_image.encoding = "rgb8"
-
-            msg.encoding = "rgb8"
-            self.image_pub.publish(msg)
+            self.camera_image = msg
+            self.camera_image.encoding = "rgb8"
 
             # Get closest traffic light
-            traffic_light = tf_helper.get_closest_traffic_light(
+            traffic_light = tf_helper.get_closest_traffic_light_ahead_of_car(
                 self.traffic_lights, self.car_pose.position, self.waypoints)
 
-            rospy.logwarn("Car position: \n{}".format(self.car_pose.position))
-            rospy.logwarn("Closest traffic light: \n{}".format(traffic_light.pose.pose.position))
+            # rospy.logwarn("\n\nCar position is: {}, {}".format(self.car_pose.position.x, self.car_pose.position.y))
+            x, y = self.project_to_image_plane(traffic_light.pose.pose.position, self.car_pose)
 
-            # cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+            # rospy.logwarn("Car position: {}x{}".format(self.car_pose.position.x, self.car_pose.position.x))
+            # rospy.logwarn("Closest traffic light: {}x{}".format(
+            #     traffic_light.pose.pose.position.x, traffic_light.pose.pose.position.y))
+            rospy.logwarn("Calculated camera coordinates: {}, {}".format(x, y))
+
+            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+
+            cv2.circle(cv_image, (x, y), radius=50, color=(255, 0, 0), thickness=12)
+
+            marked_image = self.bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
+            self.image_pub.publish(marked_image)
 
             # light_wp, state = self.process_traffic_lights()
 
@@ -163,8 +172,7 @@ class TLDetector(object):
         #TODO implement
         return 0
 
-
-    def project_to_image_plane(self, point_in_world):
+    def project_to_image_plane(self, point_in_world, car_pose):
         """Project point from 3D world coordinates to 2D camera image location
 
         Args:
@@ -194,12 +202,35 @@ class TLDetector(object):
         except (tf.Exception, tf.LookupException, tf.ConnectivityException):
             rospy.logerr("Failed to find camera to map transform")
 
-        #TODO Use tranform and rotation to calculate 2D position of light in image
+        # rospy.logwarn("Transform shift is: {}".format(trans))
+        # rospy.logwarn("Rotation is: {}".format(rot))
 
-        x = 0
-        y = 0
+        # TODO Use transform and rotation to calculate 2D position of light in image
+        world_coordinates_point = np.array(
+            [point_in_world.x, point_in_world.y, point_in_world.z], dtype=np.float32).reshape(3, 1)
 
-        return (x, y)
+        # translation_vector = np.array(trans, dtype=np.float32).reshape(3, 1)
+        translation_vector = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z + 1.5]).reshape(3, 1)
+
+        # Move point to camera origin
+        world_coordinates_point_shifted_to_camera_coordinates = world_coordinates_point - translation_vector
+
+        homogenous_vector = np.ones(shape=(4, 1), dtype=np.float32)
+        homogenous_vector[:3] = world_coordinates_point_shifted_to_camera_coordinates
+
+        quaternion = np.array([
+            car_pose.orientation.x, car_pose.orientation.y, car_pose.orientation.z, car_pose.orientation.w],
+            dtype=np.float32)
+
+        euler_angles = tf.transformations.euler_from_quaternion(quaternion)
+        rotation_matrix = tf.transformations.euler_matrix(*euler_angles)
+
+        point_in_camera_coordinates = np.dot(rotation_matrix, homogenous_vector)
+
+        x = (fx * point_in_camera_coordinates[0] * point_in_camera_coordinates[2]) + (image_width / 2)
+        y = (fy * point_in_camera_coordinates[1] * point_in_camera_coordinates[2]) + (image_height / 2)
+
+        return int(x), int(y)
 
     def get_light_state(self, light):
         """Determines the current color of the traffic light
@@ -253,3 +284,4 @@ if __name__ == '__main__':
         TLDetector()
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')
+

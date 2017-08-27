@@ -3,6 +3,7 @@ Utilities for traffic light module
 """
 
 import numpy as np
+import cv2
 
 
 def get_distance_between_points(first, second):
@@ -42,7 +43,7 @@ def get_closest_waypoint_index(position, waypoints):
     return best_index
 
 
-def get_closest_traffic_light(traffic_lights, car_position, waypoints):
+def get_closest_traffic_light_ahead_of_car(traffic_lights, car_position, waypoints):
     """
     Given list of traffic lights, car position and waypoints, return closest traffic light
     ahead of the car
@@ -53,13 +54,26 @@ def get_closest_traffic_light(traffic_lights, car_position, waypoints):
     """
 
     car_waypoint_index = get_closest_waypoint_index(car_position, waypoints)
-    traffic_lights_waypoint_indices = []
 
-    for traffic_light in traffic_lights:
+    lights_waypoints_indices = []
+
+    for traffic_light_index, traffic_light in enumerate(traffic_lights):
 
         index = get_closest_waypoint_index(traffic_light.pose.pose.position, waypoints)
-        traffic_lights_waypoint_indices.append(index)
 
-    differences = np.array(traffic_lights_waypoint_indices) - car_waypoint_index
-    index = np.argmin(np.abs(differences))
-    return traffic_lights[index]
+        if index > car_waypoint_index:
+            lights_waypoints_indices.append((traffic_light_index, index - car_waypoint_index))
+
+    sorted_traffic_lights_waypoint_indices = sorted(lights_waypoints_indices, key=lambda x: x[1])
+    light_index = sorted_traffic_lights_waypoint_indices[0][0]
+    return traffic_lights[light_index]
+
+
+def draw_marker(image, x, y):
+    """
+    Draw a simple marker around x, y coordinates in an image
+    :param image: numpy array
+    :param x: integer
+    :param y: integer
+    """
+
