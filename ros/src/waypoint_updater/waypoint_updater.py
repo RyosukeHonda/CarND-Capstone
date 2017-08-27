@@ -63,7 +63,7 @@ class WaypointUpdater(object):
 
             for index in range(len(lane.waypoints)):
 
-                lane.waypoints[index].twist.twist.linear.x = 0.0 * miles_per_hour_to_metres_per_second
+                lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
 
             is_red_light_ahed = self.upcoming_traffic_light_waypoint_id is not None and \
                 self.upcoming_traffic_light_waypoint_id > car_waypoint_index
@@ -87,6 +87,7 @@ class WaypointUpdater(object):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.upcoming_traffic_light_waypoint_id = msg.data
         self.last_upcoming_traffic_light_message_time = rospy.get_rostime()
+        rospy.logwarn("Waypoints received red light info at {}".format(msg.data))
 
     def is_traffic_light_message_stale(self):
 
