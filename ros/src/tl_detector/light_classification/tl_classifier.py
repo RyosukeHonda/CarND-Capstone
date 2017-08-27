@@ -18,8 +18,9 @@ class TLClassifier(object):
 
         Returns:
             int: (state):ID of traffic light color (specified in styx_msgs/TrafficLight)
-	    int: (red_area):Number of red pixels
-	    image: (cv::Mt): image of red pixels
+
+	    (int: (red_area):Number of red pixels)
+	    (image: (cv::Mt): image of red pixels)
         """
         #TODO implement light color prediction
 
@@ -31,8 +32,10 @@ class TLClassifier(object):
 	if red_area > red_pixels:
 	    state = TrafficLight.RED
 
-	    
-        return (state, red_area, red_image)
+	return state    
+	
+	#For debugging
+        #return (state, red_area, red_image)
 	
     def get_colored_area(self, image, lower, upper):
 	hsv_image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
