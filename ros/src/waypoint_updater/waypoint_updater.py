@@ -65,16 +65,20 @@ class WaypointUpdater(object):
 
                 lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
 
-            is_red_light_ahed = self.upcoming_traffic_light_waypoint_id is not None and \
-                self.upcoming_traffic_light_waypoint_id > car_waypoint_index
-
-            if is_red_light_ahed and not self.is_traffic_light_message_stale():
-
-                traffic_light_id = self.upcoming_traffic_light_waypoint_id - car_waypoint_index
-
-                for index in range(len(lane.waypoints)):
-
-                    lane.waypoints[index].twist.twist.linear.x = -100
+            # is_red_light_ahed = self.upcoming_traffic_light_waypoint_id is not None and \
+            #     self.upcoming_traffic_light_waypoint_id > car_waypoint_index
+            #
+            # rospy.logwarn("Is red light ahead: {}".format(is_red_light_ahed))
+            #
+            # if is_red_light_ahed and not self.is_traffic_light_message_stale():
+            #
+            #     rospy.logwarn("Settiing waypoints to zero")
+            #
+            #     traffic_light_id = self.upcoming_traffic_light_waypoint_id - car_waypoint_index
+            #
+            #     for index in range(len(lane.waypoints)):
+            #
+            #         lane.waypoints[index].twist.twist.linear.x = -100
 
             self.final_waypoints_pub.publish(lane)
 
