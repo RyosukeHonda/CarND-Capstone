@@ -193,10 +193,10 @@ class TLDetector(object):
 	
         x, y = self.project_to_image_plane(light.pose.pose.position)
 	rospy.logwarn("X:{0}  Y:{1}".format(x,y))
-	cv_image2 = cv_image[y-200:y+200,x-200:x+200]
+	#cv_image2 = cv_image[y-200:y+200,x-200:x+200]
 	#publish image 
 	cv2.circle(cv_image,(int(y),int(x)), radius = 5, color=(255,0,0),thickness = 12)
-	marked_image = self.bridge.cv2_to_imgmsg(cv_image2,encoding="bgr8")
+	marked_image = self.bridge.cv2_to_imgmsg(cv_image,encoding="bgr8")
 	self.image_pub.publish(marked_image)
 	
 
