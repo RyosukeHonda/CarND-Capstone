@@ -5,8 +5,10 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 import std_msgs.msg
+import os
 
 import waypoints_helper
+import numpy as np
 
 '''
 This node will publish waypoints from the car's current position to some `x` distance ahead.
@@ -61,6 +63,8 @@ class WaypointUpdater(object):
             car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
             lane.waypoints = waypoints_helper.get_sublist(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS)
 
+            # lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(lane.waypoints)
+
             for index in range(len(lane.waypoints)):
 
                 lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
@@ -78,9 +82,18 @@ class WaypointUpdater(object):
 
             self.final_waypoints_pub.publish(lane)
 
+            path = "/home/student/Downloads/final_waypoints.txt"
+
+            if not os.path.exists(path):
+
+                waypoints_helper.save_waypoints(lane.waypoints, path)
+
     def base_waypoints_cb(self, lane):
         # TODO: Implement
         self.last_base_waypoints_lane = lane
+
+        # if not os.path.exists(path):
+        #     waypoints_helper.save_waypoints(lane.waypoints, path)
 
     def traffic_cb(self, msg):
 
