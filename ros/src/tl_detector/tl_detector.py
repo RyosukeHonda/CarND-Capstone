@@ -210,7 +210,7 @@ class TLDetector(object):
             [point_in_world.x, point_in_world.y, point_in_world.z], dtype=np.float32).reshape(3, 1)
 
         # translation_vector = np.array(trans, dtype=np.float32).reshape(3, 1)
-        translation_vector = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z]).reshape(3, 1)
+        translation_vector = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z + 1.5]).reshape(3, 1)
 
         # Move point to camera origin
         world_coordinates_point_shifted_to_camera_coordinates = world_coordinates_point - translation_vector
@@ -227,14 +227,8 @@ class TLDetector(object):
 
         point_in_camera_coordinates = np.dot(rotation_matrix, homogenous_vector)
 
-        # x = fx * point_in_camera_coordinates[0] / point_in_camera_coordinates[2]
-        # y = fy * point_in_camera_coordinates[1] / point_in_camera_coordinates[2]
-
-        x = fx * point_in_camera_coordinates[0] * point_in_camera_coordinates[2]
-        y = fy * point_in_camera_coordinates[1] * point_in_camera_coordinates[2]
-
-        # x = fx * world_coordinates_point_shifted_to_camera_coordinates[0] / world_coordinates_point_shifted_to_camera_coordinates[2]
-        # y = fy * world_coordinates_point_shifted_to_camera_coordinates[1] / world_coordinates_point_shifted_to_camera_coordinates[2]
+        x = (fx * point_in_camera_coordinates[0] * point_in_camera_coordinates[2]) + (image_width / 2)
+        y = (fy * point_in_camera_coordinates[1] * point_in_camera_coordinates[2]) + (image_height / 2)
 
         return int(x), int(y)
 
