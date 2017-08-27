@@ -209,8 +209,10 @@ class TLDetector(object):
         world_coordinates_point = np.array(
             [point_in_world.x, point_in_world.y, point_in_world.z], dtype=np.float32).reshape(3, 1)
 
+        car_position = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z], dtype=np.float32).reshape(3, 1)
+        camera_offset = np.array([1.0, 0, 1.2], dtype=np.float32).reshape(3, 1)
         # translation_vector = np.array(trans, dtype=np.float32).reshape(3, 1)
-        translation_vector = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z + 1.5]).reshape(3, 1)
+        translation_vector = car_position + camera_offset
 
         # Move point to camera origin
         world_coordinates_point_shifted_to_camera_coordinates = world_coordinates_point - translation_vector
