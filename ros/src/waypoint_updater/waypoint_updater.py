@@ -87,6 +87,7 @@ class WaypointUpdater(object):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.upcoming_traffic_light_waypoint_id = msg.data
         self.last_upcoming_traffic_light_message_time = rospy.get_rostime()
+        rospy.logwarn("Waypoints received red light info at {}".format(msg.data))
 
     def is_traffic_light_message_stale(self):
 
