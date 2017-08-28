@@ -6,6 +6,7 @@ from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
 import std_msgs.msg
 import os
+import shutil
 
 import waypoints_helper
 import numpy as np
@@ -47,6 +48,16 @@ class WaypointUpdater(object):
         self.upcoming_traffic_light_waypoint_id = None
         self.last_upcoming_traffic_light_message_time = None
 
+        self.last_saved_final_points_start_index = -10
+
+        dir = "/tmp/waypoints/"
+        shutil.rmtree(dir, ignore_errors=True)
+
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+
+        self.previous_debug_time = rospy.get_rostime()
+
         rospy.spin()
 
     def pose_cb(self, msg):
@@ -63,7 +74,7 @@ class WaypointUpdater(object):
             car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
             lane.waypoints = waypoints_helper.get_sublist(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS)
 
-            # lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(lane.waypoints)
+            lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(lane.waypoints)
 
             for index in range(len(lane.waypoints)):
 
@@ -86,11 +97,21 @@ class WaypointUpdater(object):
 
             self.final_waypoints_pub.publish(lane)
 
-            path = "/home/student/Downloads/final_waypoints.txt"
+            # Save submitted path roughly every x points
+            if self.last_saved_final_points_start_index + 50 < car_waypoint_index:
 
-            if not os.path.exists(path):
-
+                path = "/tmp/waypoints/final_waypoints_{}.txt".format(car_waypoint_index)
                 waypoints_helper.save_waypoints(lane.waypoints, path)
+                self.last_saved_final_points_start_index = car_waypoint_index
+
+            current_time = rospy.get_rostime()
+            ros_duration_since_debug = current_time - self.previous_debug_time
+            duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
+
+            if duration_since_debug_in_seconds > 0.5:
+
+                rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
+                self.previous_debug_time = current_time
 
     def base_waypoints_cb(self, lane):
         # TODO: Implement
@@ -104,7 +125,7 @@ class WaypointUpdater(object):
         # TODO: Callback for /traffic_waypoint message. Implement
         self.upcoming_traffic_light_waypoint_id = msg.data
         self.last_upcoming_traffic_light_message_time = rospy.get_rostime()
-        rospy.logwarn("Waypoints received red light info at {}".format(msg.data))
+        # rospy.logwarn("Waypoints received red light info at {}".format(msg.data))
 
     def is_traffic_light_message_stale(self):
 

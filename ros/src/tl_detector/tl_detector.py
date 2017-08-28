@@ -98,7 +98,7 @@ class TLDetector(object):
                         traffic_light.pose.pose.position, self.waypoints)
 
                     self.upcoming_red_light_pub.publish(Int32(traffic_light_waypoint_index))
-                    rospy.logwarn("Publishing red light at waypoint: {}".format(traffic_light_waypoint_index))
+                    # rospy.logwarn("Publishing red light at waypoint: {}".format(traffic_light_waypoint_index))
 
     def waypoints_cb(self, lane):
         self.waypoints = lane.waypoints
