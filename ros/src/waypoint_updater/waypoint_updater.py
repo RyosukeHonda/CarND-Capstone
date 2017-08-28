@@ -97,21 +97,21 @@ class WaypointUpdater(object):
 
             self.final_waypoints_pub.publish(lane)
 
-            # Save submitted path roughly every x points
-            if self.last_saved_final_points_start_index + 50 < car_waypoint_index:
-
-                path = "/tmp/waypoints/final_waypoints_{}.txt".format(car_waypoint_index)
-                waypoints_helper.save_waypoints(lane.waypoints, path)
-                self.last_saved_final_points_start_index = car_waypoint_index
-
-            current_time = rospy.get_rostime()
-            ros_duration_since_debug = current_time - self.previous_debug_time
-            duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
-
-            if duration_since_debug_in_seconds > 0.5:
-
-                rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
-                self.previous_debug_time = current_time
+            # # Save submitted path roughly every x points
+            # if self.last_saved_final_points_start_index + 50 < car_waypoint_index:
+            #
+            #     path = "/tmp/waypoints/final_waypoints_{}.txt".format(car_waypoint_index)
+            #     waypoints_helper.save_waypoints(lane.waypoints, path)
+            #     self.last_saved_final_points_start_index = car_waypoint_index
+            #
+            # current_time = rospy.get_rostime()
+            # ros_duration_since_debug = current_time - self.previous_debug_time
+            # duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
+            #
+            # if duration_since_debug_in_seconds > 0.5:
+            #
+            #     rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
+            #     self.previous_debug_time = current_time
 
     def base_waypoints_cb(self, lane):
         # TODO: Implement

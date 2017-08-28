@@ -13,7 +13,7 @@ class Controller(object):
         self.steering_pid = steering_pid
 
         self.throttle_filter = lowpass.SmoothingFilter(window_weight=0.8)
-        self.brake_filter = lowpass.SmoothingFilter(window_weight=0.5)
+        self.brake_filter = lowpass.SmoothingFilter(window_weight=0.2)
         self.steering_filter = lowpass.SmoothingFilter(window_weight=0.5)
 
     def control(self, linear_velocity_error, cross_track_error, sample_time):
