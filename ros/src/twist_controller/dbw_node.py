@@ -64,6 +64,7 @@ class DBWNode(object):
         self.previous_debug_time = rospy.get_rostime()
 
         self.throttle_pid = pid.PID(kp=0.2, ki=0.0, kd=0.1, mn=decel_limit, mx=0.5 * accel_limit)
+        self.brake_pid = pid.PID(kp=100.0, ki=0.0, kd=0.1, mn=0, mx=200)
         self.steering_pid = pid.PID(kp=1.0, ki=0.001, kd=0.5, mn=-max_steer_angle, mx=max_steer_angle)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
@@ -74,7 +75,7 @@ class DBWNode(object):
                                          BrakeCmd, queue_size=1)
 
         # TODO: Create `TwistController` object
-        self.controller = Controller(self.throttle_pid, self.steering_pid)
+        self.controller = Controller(self.throttle_pid, self.brake_pid, self.steering_pid)
 
         # TODO: Subscribe to all the topics you need to
         rospy.Subscriber('/twist_cmd', TwistStamped, self.twist_commands_cb, queue_size=1)
@@ -106,7 +107,8 @@ class DBWNode(object):
                 duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
                 self.previous_loop_time = current_time
 
-                linear_velocity_error = self.final_waypoints[0].twist.twist.linear.x - self.current_velocity.linear.x
+                # Base linear velocity error on difference between current speed and desired speed x waypoints later
+                linear_velocity_error = self.final_waypoints[1].twist.twist.linear.x - self.current_velocity.linear.x
                 cross_track_error = dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
 
                 # Primitive command
