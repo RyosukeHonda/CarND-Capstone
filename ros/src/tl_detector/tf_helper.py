@@ -3,7 +3,6 @@ Utilities for traffic light module
 """
 
 import numpy as np
-import cv2
 
 
 def get_distance_between_points(first, second):
@@ -20,60 +19,61 @@ def get_distance_between_points(first, second):
     return np.sqrt(x_difference**2 + y_difference**2)
 
 
-def get_closest_waypoint_index(position, waypoints):
+def get_waypoints_matrix(waypoints):
+    """
+    Converts waypoints listt to numpy matrix
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :return: 2D numpy array
+    """
+
+    waypoints_matrix = np.zeros(shape=(len(waypoints), 2), dtype=np.float32)
+
+    for index, waypoint in enumerate(waypoints):
+        waypoints_matrix[index, 0] = waypoint.pose.pose.position.x
+        waypoints_matrix[index, 1] = waypoint.pose.pose.position.y
+
+    return waypoints_matrix
+
+
+def get_closest_waypoint_index(position, waypoints_matrix):
     """
     Given a pose and waypoints list, return index of waypoint closest to pose
     :param position: geometry_msgs.msgs.Position instance
-    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param waypoints_matrix: numpy matrix with waypoints coordinates
     :return: integer index
     """
 
-    best_index = 0
-    best_distance = get_distance_between_points(position, waypoints[0].pose.pose.position)
+    x_distances = waypoints_matrix[:, 0] - position.x
+    y_distances = waypoints_matrix[:, 1] - position.y
 
-    for index, waypoint in enumerate(waypoints):
-
-        distance = get_distance_between_points(position, waypoint.pose.pose.position)
-
-        if distance < best_distance:
-
-            best_index = index
-            best_distance = distance
-
-    return best_index
+    squared_distances = x_distances**2 + y_distances**2
+    return np.argmin(squared_distances)
 
 
-def get_closest_traffic_light_ahead_of_car(traffic_lights, car_position, waypoints):
+def get_info_about_closest_traffic_light_ahead_of_car(traffic_lights, car_position, waypoints_matrix):
     """
     Given list of traffic lights, car position and waypoints, return closest traffic light
-    ahead of the car
+    ahead of the car and index of closest waypoint
     :param traffic_lights: list of styx_msgs.msg.TrafficLight instances
     :param car_position: geometry_msgs.msgs.Pose instance
-    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param waypoints_matrix: numpy matrix with waypoints coordinates
     :return: styx_msgs.msg.TrafficLight instance
     """
 
-    car_waypoint_index = get_closest_waypoint_index(car_position, waypoints)
+    car_waypoint_index = get_closest_waypoint_index(car_position, waypoints_matrix)
 
     lights_waypoints_indices = []
 
     for traffic_light_index, traffic_light in enumerate(traffic_lights):
 
-        index = get_closest_waypoint_index(traffic_light.pose.pose.position, waypoints)
+        waypoint_index = get_closest_waypoint_index(traffic_light.pose.pose.position, waypoints_matrix)
 
-        if index > car_waypoint_index:
-            lights_waypoints_indices.append((traffic_light_index, index - car_waypoint_index))
+        if waypoint_index > car_waypoint_index:
+            lights_waypoints_indices.append((traffic_light_index, waypoint_index))
 
     sorted_traffic_lights_waypoint_indices = sorted(lights_waypoints_indices, key=lambda x: x[1])
+
     light_index = sorted_traffic_lights_waypoint_indices[0][0]
-    return traffic_lights[light_index]
+    light_waypoint_index = sorted_traffic_lights_waypoint_indices[0][0]
 
-
-def draw_marker(image, x, y):
-    """
-    Draw a simple marker around x, y coordinates in an image
-    :param image: numpy array
-    :param x: integer
-    :param y: integer
-    """
-
+    return traffic_lights[light_index], light_waypoint_index
