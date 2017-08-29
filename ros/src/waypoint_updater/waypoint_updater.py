@@ -48,13 +48,14 @@ class WaypointUpdater(object):
         self.upcoming_traffic_light_waypoint_id = None
         self.last_upcoming_traffic_light_message_time = None
 
+        # For debugging purposes only
         self.last_saved_final_points_start_index = -10
 
-        dir = "/tmp/waypoints/"
-        shutil.rmtree(dir, ignore_errors=True)
+        self.waypoints_dir = "/tmp/waypoints/"
+        shutil.rmtree(self.waypoints_dir, ignore_errors=True)
 
-        if not os.path.exists(dir):
-            os.makedirs(dir)
+        if not os.path.exists(self.waypoints_dir):
+            os.makedirs(self.waypoints_dir)
 
         self.previous_debug_time = rospy.get_rostime()
 
@@ -72,9 +73,9 @@ class WaypointUpdater(object):
             lane.header.stamp = rospy.Time.now()
 
             car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
-            lane.waypoints = waypoints_helper.get_sublist(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS)
+            final_waypoints = waypoints_helper.get_sublist(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS)
 
-            lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(lane.waypoints)
+            lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
 
             for index in range(len(lane.waypoints)):
 
@@ -100,7 +101,7 @@ class WaypointUpdater(object):
             # # Save submitted path roughly every x points
             # if self.last_saved_final_points_start_index + 50 < car_waypoint_index:
             #
-            #     path = "/tmp/waypoints/final_waypoints_{}.txt".format(car_waypoint_index)
+            #    path = os.path.join(self.waypoints_dir, "final_waypoints_{}.txt".format(car_waypoint_index)
             #     waypoints_helper.save_waypoints(lane.waypoints, path)
             #     self.last_saved_final_points_start_index = car_waypoint_index
             #
