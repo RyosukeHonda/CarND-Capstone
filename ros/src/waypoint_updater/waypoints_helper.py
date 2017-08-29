@@ -5,6 +5,22 @@ Utilities used by waypoints_updater
 import numpy as np
 
 
+def get_waypoints_matrix(waypoints):
+    """
+    Converts waypoints listt to numpy matrix
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :return: 2D numpy array
+    """
+
+    waypoints_matrix = np.zeros(shape=(len(waypoints), 2), dtype=np.float32)
+
+    for index, waypoint in enumerate(waypoints):
+        waypoints_matrix[index, 0] = waypoint.pose.pose.position.x
+        waypoints_matrix[index, 1] = waypoint.pose.pose.position.y
+
+    return waypoints_matrix
+
+
 def get_distance_between_points(first, second):
     """
     Return distance between two points
@@ -19,27 +35,19 @@ def get_distance_between_points(first, second):
     return np.sqrt(x_difference**2 + y_difference**2)
 
 
-def get_closest_waypoint_index(pose, waypoints):
+def get_closest_waypoint_index(position, waypoints_matrix):
     """
     Given a pose and waypoints list, return index of waypoint closest to pose
-    :param pose: geometry_msgs.msgs.Pose instance
-    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param position: geometry_msgs.msgs.Position instance
+    :param waypoints_matrix: numpy matrix with waypoints coordinates
     :return: integer index
     """
 
-    best_index = 0
-    best_distance = get_distance_between_points(pose.position, waypoints[0].pose.pose.position)
+    x_distances = waypoints_matrix[:, 0] - position.x
+    y_distances = waypoints_matrix[:, 1] - position.y
 
-    for index, waypoint in enumerate(waypoints):
-
-        distance = get_distance_between_points(pose.position, waypoint.pose.pose.position)
-
-        if distance < best_distance:
-
-            best_index = index
-            best_distance = distance
-
-    return best_index
+    squared_distances = x_distances**2 + y_distances**2
+    return np.argmin(squared_distances)
 
 
 def get_sublist(elements, start_index, size):
@@ -93,11 +101,6 @@ def get_smoothed_out_waypoints(waypoints):
 
 def save_waypoints(waypoints, path):
 
-    waypoints_matrix = np.zeros(shape=(len(waypoints), 2), dtype=np.float32)
-
-    for index, waypoint in enumerate(waypoints):
-        waypoints_matrix[index, 0] = waypoint.pose.pose.position.x
-        waypoints_matrix[index, 1] = waypoint.pose.pose.position.y
-
+    waypoints_matrix = get_waypoints_matrix(waypoints)
     np.savetxt(path, waypoints_matrix)
 

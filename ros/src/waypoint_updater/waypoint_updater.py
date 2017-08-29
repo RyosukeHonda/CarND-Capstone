@@ -69,10 +69,12 @@ class WaypointUpdater(object):
             pose = msg.pose
             base_waypoints = self.last_base_waypoints_lane.waypoints
 
+            waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
+
             lane = Lane()
             lane.header.stamp = rospy.Time.now()
 
-            car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose, base_waypoints)
+            car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose.position, waypoints_matrix)
             final_waypoints = waypoints_helper.get_sublist(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS)
 
             lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
