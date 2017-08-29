@@ -69,9 +69,13 @@ class TLDetector(object):
 
         if are_arguments_available:
 
+            start = rospy.get_rostime()
+
+            waypoints_matrix = tf_helper.get_waypoints_matrix(self.waypoints)
+
             # Get closest traffic light
-            traffic_light = tf_helper.get_closest_traffic_light_ahead_of_car(
-                self.traffic_lights, self.car_pose.position, self.waypoints)
+            traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
+                self.traffic_lights, self.car_pose.position, waypoints_matrix)
 
             x, y = self.project_to_image_plane(traffic_light.pose.pose.position, self.car_pose)
 
@@ -94,11 +98,15 @@ class TLDetector(object):
 
                 if traffic_light_state == TrafficLight.RED:
 
-                    traffic_light_waypoint_index = tf_helper.get_closest_waypoint_index(
-                        traffic_light.pose.pose.position, self.waypoints)
-
                     self.upcoming_red_light_pub.publish(Int32(traffic_light_waypoint_index))
                     # rospy.logwarn("Publishing red light at waypoint: {}".format(traffic_light_waypoint_index))
+
+            end = rospy.get_rostime()
+
+            ros_duration = end - start
+            duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
+
+            rospy.logwarn("Traffic search duration: {}".format(duration_in_seconds))
 
     def waypoints_cb(self, lane):
         self.waypoints = lane.waypoints
