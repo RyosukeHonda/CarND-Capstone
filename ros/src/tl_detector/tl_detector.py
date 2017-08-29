@@ -69,8 +69,6 @@ class TLDetector(object):
 
         if are_arguments_available:
 
-            start = rospy.get_rostime()
-
             waypoints_matrix = tf_helper.get_waypoints_matrix(self.waypoints)
 
             # Get closest traffic light
@@ -100,13 +98,6 @@ class TLDetector(object):
 
                     self.upcoming_red_light_pub.publish(Int32(traffic_light_waypoint_index))
                     # rospy.logwarn("Publishing red light at waypoint: {}".format(traffic_light_waypoint_index))
-
-            end = rospy.get_rostime()
-
-            ros_duration = end - start
-            duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
-
-            rospy.logwarn("Traffic search duration: {}".format(duration_in_seconds))
 
     def waypoints_cb(self, lane):
         self.waypoints = lane.waypoints
