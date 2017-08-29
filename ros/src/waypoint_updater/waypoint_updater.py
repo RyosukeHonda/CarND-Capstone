@@ -81,12 +81,12 @@ class WaypointUpdater(object):
 
                 lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
 
-            # is_red_light_ahed = self.upcoming_traffic_light_waypoint_id is not None and \
+            # is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
             #     self.upcoming_traffic_light_waypoint_id > car_waypoint_index
             #
-            # rospy.logwarn("Is red light ahead: {}".format(is_red_light_ahed))
+            # rospy.logwarn("Is red light ahead: {}".format(is_red_light_ahead))
             #
-            # if is_red_light_ahed and not self.is_traffic_light_message_stale():
+            # if is_red_light_ahead and not self.is_traffic_light_message_stale():
             #
             #     rospy.logwarn("Settiing waypoints to zero")
             #
@@ -105,14 +105,14 @@ class WaypointUpdater(object):
             #     waypoints_helper.save_waypoints(lane.waypoints, path)
             #     self.last_saved_final_points_start_index = car_waypoint_index
             #
-            # current_time = rospy.get_rostime()
-            # ros_duration_since_debug = current_time - self.previous_debug_time
-            # duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
-            #
-            # if duration_since_debug_in_seconds > 0.5:
-            #
-            #     rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
-            #     self.previous_debug_time = current_time
+            current_time = rospy.get_rostime()
+            ros_duration_since_debug = current_time - self.previous_debug_time
+            duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
+
+            if duration_since_debug_in_seconds > 0.5:
+
+                rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
+                self.previous_debug_time = current_time
 
     def base_waypoints_cb(self, lane):
         # TODO: Implement
