@@ -65,6 +65,20 @@ def get_sublist(elements, start_index, size):
     doubled_elements = elements + elements[:size]
     return doubled_elements[start_index: start_index + size]
 
+def get_sublist_covered(base_points, start_index, size_ahead, size_behind):
+    """
+    Given a list of elements, start index and size of sublist, returns
+    sublist starting from start_index - size_behind, Takes care of wrapping around should
+    start_index + size > len(elements)
+    :param elements: list
+    :param start_index: start index
+    :param size: size of sublist
+    :return: sublist, wrapped around beginning of elements list if necessary
+    """
+
+    behind_start_index = len(base_points) - size_behind
+    extended_points = base_points[behind_start_index:] + base_points + base_points[:size_ahead]
+    return extended_points[start_index: (start_index + size_ahead + size_behind)]
 
 def get_smoothed_out_waypoints(waypoints):
     """

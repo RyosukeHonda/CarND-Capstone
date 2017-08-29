@@ -27,6 +27,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
 LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
+LOOKBEHIND_WPS = 50 # coudl be reduced
 
 miles_per_hour_to_metres_per_second = 0.44704
 
@@ -75,9 +76,10 @@ class WaypointUpdater(object):
             lane.header.stamp = rospy.Time.now()
 
             car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose.position, waypoints_matrix)
-            final_waypoints = waypoints_helper.get_sublist(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS)
+            final_waypoints = waypoints_helper.get_sublist_covered(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
 
             lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
+            lane.waypoints = lane.waypoints[LOOKBEHIND_WPS:]
 
             for index in range(len(lane.waypoints)):
 
