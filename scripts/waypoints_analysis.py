@@ -3,8 +3,6 @@ Very simple script for waypoints analysis
 """
 import numpy as np
 import matplotlib.pyplot as plt
-import seaborn
-
 
 def get_statistics(data):
     distances = []

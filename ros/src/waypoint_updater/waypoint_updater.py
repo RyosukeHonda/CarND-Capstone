@@ -26,7 +26,7 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 200 # Number of waypoints we will publish. You can change this number
+LOOKAHEAD_WPS = 30 # Number of waypoints we will publish. You can change this number
 
 miles_per_hour_to_metres_per_second = 0.44704
 
@@ -80,7 +80,7 @@ class WaypointUpdater(object):
             lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
 
             for index in range(len(lane.waypoints)):
-              
+
                 lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
 
             # is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
@@ -112,7 +112,6 @@ class WaypointUpdater(object):
             duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
 
             if duration_since_debug_in_seconds > 0.5:
-
                 rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
                 self.previous_debug_time = current_time
 

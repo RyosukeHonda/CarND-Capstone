@@ -53,18 +53,25 @@ def get_closest_waypoint_index(position, waypoints_matrix):
 def get_sublist(elements, start_index, size):
     """
     Given a list of elements, start index and size of sublist, returns
-    sublist starting from start_index that has size elements. Takes care of wrapping around should
-    start_index + size > len(elements)
+    sublist starting from start_index that has size elements. The sublist is made
+    of waypoints before and after the car.
     :param elements: list
     :param start_index: start index
     :param size: size of sublist
     :return: sublist, wrapped around beginning of elements list if necessary
     """
+    
+    size = size / 2
+    start_index -= size
+    if start_index < 0:
+       start_index = len(elements) + start_index
 
-    # A very simple, not necessarily efficient solution
-    doubled_elements = elements + elements[:size]
-    return doubled_elements[start_index: start_index + size]
-
+    sublist = []
+    for i in range(size):
+        start_index = start_index % (len(elements) - 1)
+        sublist.append(elements[start_index])
+        start_index += 1
+    return sublist
 
 def get_smoothed_out_waypoints(waypoints):
     """
@@ -103,4 +110,3 @@ def save_waypoints(waypoints, path):
 
     waypoints_matrix = get_waypoints_matrix(waypoints)
     np.savetxt(path, waypoints_matrix)
-
