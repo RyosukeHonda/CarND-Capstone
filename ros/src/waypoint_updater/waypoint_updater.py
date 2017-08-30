@@ -80,7 +80,7 @@ class WaypointUpdater(object):
             lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
 
             for index in range(len(lane.waypoints)):
-
+              
                 lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
 
             # is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
