@@ -27,6 +27,7 @@ class TLDetector(object):
         self.waypoints = None
         self.camera_image = None
         self.lights = []
+	self.traffic_positions = tf_helper.get_given_traffic_lights()
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
@@ -63,8 +64,11 @@ class TLDetector(object):
 
     def pose_cb(self, msg):
         self.car_pose = msg.pose
+	
+	# For debugging(Ground Truth data)
+        #arguments = [self.traffic_lights, self.car_pose, self.waypoints, self.image]
 
-        arguments = [self.traffic_lights, self.car_pose, self.waypoints, self.image]
+	arguments = [self.traffic_positions, self.car_pose, self.waypoints, self.image]
         are_arguments_available = all([x is not None for x in arguments])
 
         if are_arguments_available:
@@ -72,8 +76,14 @@ class TLDetector(object):
             waypoints_matrix = tf_helper.get_waypoints_matrix(self.waypoints)
 
             # Get closest traffic light
-            traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
-                self.traffic_lights, self.car_pose.position, waypoints_matrix)
+
+	    # For debugging(Ground Truth data)
+            # traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
+                # self.traffic_lights, self.car_pose.position, waypoints_matrix)
+
+
+	    traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
+                self.traffic_positions.lights, self.car_pose.position, waypoints_matrix)
 
             x, y = self.project_to_image_plane(traffic_light.pose.pose.position, self.car_pose)
 
@@ -97,6 +107,7 @@ class TLDetector(object):
                 if traffic_light_state == TrafficLight.RED:
 
                     self.upcoming_red_light_pub.publish(Int32(traffic_light_waypoint_index))
+		    
                     # rospy.logwarn("Publishing red light at waypoint: {}".format(traffic_light_waypoint_index))
 
     def waypoints_cb(self, lane):
@@ -169,6 +180,9 @@ class TLDetector(object):
         y = (fy * point_in_camera_coordinates[1] * point_in_camera_coordinates[2]) + (image_height / 2)
 
         return int(x), int(y)
+
+
+
 
 
 if __name__ == '__main__':

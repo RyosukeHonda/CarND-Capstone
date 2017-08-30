@@ -3,7 +3,31 @@ Utilities for traffic light module
 """
 
 import numpy as np
+from styx_msgs.msg import TrafficLightArray, TrafficLight
+from traffic_light_config import config
 
+def get_given_traffic_lights():
+    """
+    Return given traffic light positions
+    :return: TrafficLightArray
+    """
+    traffic_lights = TrafficLightArray()
+	
+    traffic_light_list = []
+    traffic_light_positions = config.light_positions
+	
+    for traffic_light_index, traffic_light_position in enumerate(traffic_light_positions):
+	traffic_light = TrafficLight()
+
+	traffic_light.pose.pose.position.x = traffic_light_position[0]
+	traffic_light.pose.pose.position.y = traffic_light_position[1]
+	traffic_light.pose.pose.position.z = 5.837643
+	traffic_light.state = TrafficLight.UNKNOWN
+	traffic_light_list.append(traffic_light)
+	    
+    traffic_lights.lights = traffic_light_list
+
+    return traffic_lights
 
 def get_distance_between_points(first, second):
     """
@@ -72,8 +96,12 @@ def get_info_about_closest_traffic_light_ahead_of_car(traffic_lights, car_positi
             lights_waypoints_indices.append((traffic_light_index, waypoint_index))
 
     sorted_traffic_lights_waypoint_indices = sorted(lights_waypoints_indices, key=lambda x: x[1])
-
+    
     light_index = sorted_traffic_lights_waypoint_indices[0][0]
-    light_waypoint_index = sorted_traffic_lights_waypoint_indices[0][0]
+    light_waypoint_index = sorted_traffic_lights_waypoint_indices[0][1]
+
 
     return traffic_lights[light_index], light_waypoint_index
+
+
+
