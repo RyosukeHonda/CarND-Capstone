@@ -6,38 +6,6 @@ import numpy as np
 import rospy
 
 
-def get_polynomial_fit(arguments, values, degree):
-    """
-    Given a list of arguments and values, fit a polynomial to them and return its coefficients
-    :param arguments: list of styx_msgs.msg.Waypoint instances
-    :param values: integer
-    :param degree: polynomial degree
-    :return: polynomial coefficients, list of floats starting from constant ending at last degree coefficient
-    """
-
-    coefficients = np.polyfit(arguments, values, degree)
-
-    # Numpy returns coefficients with highest degree first, but we want them in opposite order
-    return list(reversed(coefficients))
-
-
-def evaluate_polynomial(coefficients, x):
-    """
-    Given polynomial coefficients, evaluate polynomial at point x
-    :param coefficients:
-    :param x:
-    :return:
-    """
-
-    y = 0
-
-    for power, coefficient in enumerate(coefficients):
-
-        y += coefficient * (x ** power)
-
-    return y
-
-
 def get_waypoints_coordinates_matrix(waypoints):
     """
     Given a list of waypoints, returns a numpy matrixes with x y coordinates
@@ -60,7 +28,7 @@ def get_waypoints_coordinates_matrix(waypoints):
 
 def get_cross_track_error(waypoints, current_pose):
     """
-    Given waypoints ahead of the car, fist polynomial to them, estimates expected y at current x pose and compares
+    Given waypoints ahead of the car, fits polynomial to them, estimates expected y at current x pose and compares
     that to actual y to compute cross track error - a deviation from expected trajectory
     :param waypoints: list of styx_msgs.msg.Waypoint instances
     :param current_pose: geometry_msgs.msgs.Pose instance
@@ -87,12 +55,13 @@ def get_cross_track_error(waypoints, current_pose):
 
     # Fit a polynomial to waypoints
     degree = 2
-    coefficients = get_polynomial_fit(rotated_waypoints[:, 0], rotated_waypoints[:, 1], degree)
+
+    coefficients = np.polyfit(rotated_waypoints[:, 0], rotated_waypoints[:, 1], degree)
 
     shifted_current_point = np.array([current_pose.position.x - origin.x, current_pose.position.y - origin.y])
     rotated_current_point = np.dot(shifted_current_point, rotation_matrix)
 
-    expected_value = evaluate_polynomial(coefficients, rotated_current_point[0])
+    expected_value = np.polyval(coefficients, rotated_current_point[0])
     actual_value = rotated_current_point[1]
 
     return -(actual_value - expected_value)

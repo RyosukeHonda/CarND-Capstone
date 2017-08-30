@@ -31,21 +31,13 @@ def test_get_closest_waypoint_index():
     pose.position.x = 10
     pose.position.y = 10
 
-    first_waypoint = styx_msgs.msg.Waypoint()
-    first_waypoint.pose.pose.position.x = 0
-    first_waypoint.pose.pose.position.y = 0
+    waypoints_matrix = np.array([
+        [0, 0],
+        [8, 8],
+        [20, 20]
+    ])
 
-    second_waypoint = styx_msgs.msg.Waypoint()
-    second_waypoint.pose.pose.position.x = 8
-    second_waypoint.pose.pose.position.y = 8
-
-    third_waypoint = styx_msgs.msg.Waypoint()
-    third_waypoint.pose.pose.position.x = 20
-    third_waypoint.pose.pose.position.y = 20
-
-    waypoints = [first_waypoint, second_waypoint, third_waypoint]
-
-    assert 1 == waypoints_helper.get_closest_waypoint_index(pose, waypoints)
+    assert 1 == waypoints_helper.get_closest_waypoint_index(pose.position, waypoints_matrix)
 
 
 def test_get_sublist_simple():
