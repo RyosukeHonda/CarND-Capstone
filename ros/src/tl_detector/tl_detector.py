@@ -14,7 +14,6 @@ from traffic_light_config import config
 import tf_helper
 import numpy as np
 
-
 STATE_COUNT_THRESHOLD = 3
 
 
@@ -27,7 +26,7 @@ class TLDetector(object):
         self.waypoints = None
         self.camera_image = None
         self.lights = []
-	self.traffic_positions = tf_helper.get_given_traffic_lights()
+        self.traffic_positions = tf_helper.get_given_traffic_lights()
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
@@ -65,7 +64,7 @@ class TLDetector(object):
     def pose_cb(self, msg):
         self.car_pose = msg.pose
 
-	      # For debugging(Ground Truth data)
+        # For debugging(Ground Truth data)
         # arguments = [self.traffic_lights, self.car_pose, self.waypoints, self.image]
 
         arguments = [self.traffic_positions, self.car_pose, self.waypoints, self.image]
@@ -77,11 +76,11 @@ class TLDetector(object):
 
             # Get closest traffic light
 
-	          # For debugging(Ground Truth data)
+            # For debugging(Ground Truth data)
             # traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
-                # self.traffic_lights, self.car_pose.position, waypoints_matrix)
+            # self.traffic_lights, self.car_pose.position, waypoints_matrix)
 
-	          traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
+            traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
                 self.traffic_positions.lights, self.car_pose.position, waypoints_matrix)
 
             x, y = self.project_to_image_plane(traffic_light.pose.pose.position, self.car_pose)
@@ -104,8 +103,7 @@ class TLDetector(object):
                 self.image_pub.publish(marked_image)
 
                 if traffic_light_state == TrafficLight.RED:
-
-                    self.upcoming_red_light_pub.publish(Int32(traffic_light_waypoint_index))		    
+                    self.upcoming_red_light_pub.publish(Int32(traffic_light_waypoint_index))
                     # rospy.logwarn("Publishing red light at waypoint: {}".format(traffic_light_waypoint_index))
 
     def waypoints_cb(self, lane):
@@ -140,9 +138,9 @@ class TLDetector(object):
         try:
             now = rospy.Time.now()
             self.listener.waitForTransform("/base_link",
-                  "/world", now, rospy.Duration(1.0))
+                                           "/world", now, rospy.Duration(1.0))
             (trans, rot) = self.listener.lookupTransform("/base_link",
-                  "/world", now)
+                                                         "/world", now)
 
         except (tf.Exception, tf.LookupException, tf.ConnectivityException):
             rospy.logerr("Failed to find camera to map transform")
@@ -154,7 +152,9 @@ class TLDetector(object):
         world_coordinates_point = np.array(
             [point_in_world.x, point_in_world.y, point_in_world.z], dtype=np.float32).reshape(3, 1)
 
-        car_position = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z], dtype=np.float32).reshape(3, 1)
+        car_position = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z],
+                                dtype=np.float32).reshape(
+            3, 1)
         camera_offset = np.array([1.0, 0, 1.2], dtype=np.float32).reshape(3, 1)
         # translation_vector = np.array(trans, dtype=np.float32).reshape(3, 1)
         translation_vector = car_position + camera_offset
@@ -179,9 +179,9 @@ class TLDetector(object):
 
         return int(x), int(y)
 
+
 if __name__ == '__main__':
     try:
         TLDetector()
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')
-
