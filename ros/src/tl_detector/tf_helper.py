@@ -5,7 +5,6 @@ Utilities for traffic light module
 import numpy as np
 from styx_msgs.msg import TrafficLightArray, TrafficLight
 from traffic_light_config import config
-import rospy
 
 def get_given_traffic_lights():
     """
@@ -73,6 +72,7 @@ def get_closest_waypoint_index(position, waypoints_matrix):
 
     squared_distances = x_distances**2 + y_distances**2
     return np.argmin(squared_distances)
+
 
 def get_info_about_closest_traffic_light_ahead_of_car(traffic_lights, car_position, waypoints_matrix):
     """
