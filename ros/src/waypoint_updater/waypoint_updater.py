@@ -4,6 +4,7 @@ import math
 import rospy
 from geometry_msgs.msg import PoseStamped
 from styx_msgs.msg import Lane, Waypoint
+import geometry_msgs.msg
 import std_msgs.msg
 import os
 import shutil
@@ -36,6 +37,7 @@ class WaypointUpdater(object):
         rospy.init_node('waypoint_updater')
 
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
+        rospy.Subscriber('/current_velocity', geometry_msgs.msg.TwistStamped, self.velocity_cb, queue_size=1)
         rospy.Subscriber('/base_waypoints', Lane, self.base_waypoints_cb, queue_size=1)
 
         # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
@@ -47,6 +49,7 @@ class WaypointUpdater(object):
         self.last_base_waypoints_lane = None
         self.upcoming_traffic_light_waypoint_id = None
         self.last_upcoming_traffic_light_message_time = None
+        self.current_linear_velocity = None
 
         # For debugging purposes only
         self.last_saved_final_points_start_index = -10
@@ -63,8 +66,11 @@ class WaypointUpdater(object):
 
     def pose_cb(self, msg):
 
+        arguments = [self.last_base_waypoints_lane, self.current_linear_velocity]
+        are_arguments_available = all([x is not None for x in arguments])
+
         # TODO: Implement
-        if self.last_base_waypoints_lane is not None:
+        if are_arguments_available:
 
             pose = msg.pose
             base_waypoints = self.last_base_waypoints_lane.waypoints
@@ -83,20 +89,14 @@ class WaypointUpdater(object):
 
                 lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
 
-            # is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
-            #     self.upcoming_traffic_light_waypoint_id > car_waypoint_index
-            #
-            # rospy.logwarn("Is red light ahead: {}".format(is_red_light_ahead))
-            #
-            # if is_red_light_ahead and not self.is_traffic_light_message_stale():
-            #
-            #     rospy.logwarn("Settiing waypoints to zero")
-            #
-            #     traffic_light_id = self.upcoming_traffic_light_waypoint_id - car_waypoint_index
-            #
-            #     for index in range(len(lane.waypoints)):
-            #
-            #         lane.waypoints[index].twist.twist.linear.x = -100
+            is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
+                self.upcoming_traffic_light_waypoint_id > car_waypoint_index
+
+            if is_red_light_ahead and not self.is_traffic_light_message_stale():
+
+                waypoints_helper.set_waypoints_for_red_traffic_light(
+                    lane.waypoints, car_waypoint_index, self.current_linear_velocity,
+                    self.upcoming_traffic_light_waypoint_id)
 
             self.final_waypoints_pub.publish(lane)
 
@@ -152,6 +152,9 @@ class WaypointUpdater(object):
             dist += dl(waypoints[wp1].pose.pose.position, waypoints[i].pose.pose.position)
             wp1 = i
         return dist
+
+    def velocity_cb(self, message):
+        self.current_linear_velocity = message.twist.linear.x
 
 if __name__ == '__main__':
     try:

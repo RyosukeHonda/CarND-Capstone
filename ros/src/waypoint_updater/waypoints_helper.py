@@ -3,6 +3,7 @@ Utilities used by waypoints_updater
 """
 
 import numpy as np
+import rospy
 
 
 def get_waypoints_matrix(waypoints):
@@ -103,3 +104,20 @@ def save_waypoints(waypoints, path):
 
     waypoints_matrix = get_waypoints_matrix(waypoints)
     np.savetxt(path, waypoints_matrix)
+
+
+def set_waypoints_for_red_traffic_light(waypoints, car_waypoint_id, current_velocity, traffic_light_waypoint_id):
+    """
+    Given waypoints, current car waypoint, its velocity and traffic light waypoint, sets linear speeds between car and
+    traffic light so that car will stop at the light. Waypoints are w.r.t car, that is waypoint 0
+    is at car position and position of traffic light waypoint is at waypoint id
+    traffic_light_waypoint_id - car_waypoint_id
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param car_waypoint_id: integer
+    :param current_velocity: float
+    :param traffic_light_waypoint_id: integer
+    """
+
+    pass
+
+
