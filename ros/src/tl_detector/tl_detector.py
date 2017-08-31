@@ -133,20 +133,22 @@ class TLDetector(object):
         image_width = config.camera_info.image_width
         image_height = config.camera_info.image_height
 
-        # get transform between pose of camera and world frame
-        trans = None
-        try:
-            now = rospy.Time.now()
-            self.listener.waitForTransform("/base_link",
-                                           "/world", now, rospy.Duration(1.0))
-            (trans, rot) = self.listener.lookupTransform("/base_link",
-                                                         "/world", now)
-
-        except (tf.Exception, tf.LookupException, tf.ConnectivityException):
-            rospy.logerr("Failed to find camera to map transform")
-
-        # rospy.logwarn("Transform shift is: {}".format(trans))
-        # rospy.logwarn("Rotation is: {}".format(rot))
+        # Commenting out trans and rot code - we aren't using them for now, as they seem broken and
+        # are received using blocking code - thus somewhat slow
+        # # get transform between pose of camera and world frame
+        # trans = None
+        # try:
+        #     now = rospy.Time.now()
+        #     self.listener.waitForTransform("/base_link",
+        #                                    "/world", now, rospy.Duration(1.0))
+        #     (trans, rot) = self.listener.lookupTransform("/base_link",
+        #                                                  "/world", now)
+        #
+        # except (tf.Exception, tf.LookupException, tf.ConnectivityException):
+        #     rospy.logerr("Failed to find camera to map transform")
+        #
+        # # rospy.logwarn("Transform shift is: {}".format(trans))
+        # # rospy.logwarn("Rotation is: {}".format(rot))
 
         # TODO Use transform and rotation to calculate 2D position of light in image
         world_coordinates_point = np.array(
