@@ -106,22 +106,23 @@ class DBWNode(object):
                 duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
                 self.previous_loop_time = current_time
 
-                linear_velocity_error = self.final_waypoints[0].twist.twist.linear.x - self.current_velocity.linear.x
+                # Base linear velocity error on difference between current speed and desired speed x waypoints later
+                linear_velocity_error = self.final_waypoints[5].twist.twist.linear.x - self.current_velocity.linear.x
                 cross_track_error = dbw_helper.get_cross_track_error(self.final_waypoints, self.current_pose)
 
                 # Primitive command
                 throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
 
-                # ros_duration_since_debug = current_time - self.previous_debug_time
-                # duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
-                # if duration_since_debug_in_seconds > 0.5:
-                #
-                #     rospy.logwarn("Linear velocity error: {}".format(linear_velocity_error))
-                #     rospy.logwarn("Throttle command: {}".format(throttle))
-                #     rospy.logwarn("Brake command: {}".format(brake))
-                #
-                #     self.previous_debug_time = current_time
+                ros_duration_since_debug = current_time - self.previous_debug_time
+                duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
+                if duration_since_debug_in_seconds > 0.5:
+
+                    rospy.logwarn("Linear velocity error: {}".format(linear_velocity_error))
+                    rospy.logwarn("Throttle command: {}".format(throttle))
+                    rospy.logwarn("Brake command: {}".format(brake))
+
+                    self.previous_debug_time = current_time
 
                 self.publish(throttle, brake, steering)
 

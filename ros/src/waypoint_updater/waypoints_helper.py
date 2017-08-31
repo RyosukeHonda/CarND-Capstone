@@ -118,6 +118,10 @@ def set_waypoints_for_red_traffic_light(waypoints, car_waypoint_id, current_velo
     :param traffic_light_waypoint_id: integer
     """
 
-    pass
+    stop_waypoint_id = traffic_light_waypoint_id - car_waypoint_id
 
+    # Slow down gradually to 0 from current waypoint to waypoint at which traffic light is
+    for index, waypoint in enumerate(waypoints[:stop_waypoint_id]):
 
+        velocity = current_velocity - (current_velocity * float(index) / float(stop_waypoint_id))
+        waypoint.twist.twist.linear.x = velocity

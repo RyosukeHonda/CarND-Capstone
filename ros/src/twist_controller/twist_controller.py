@@ -25,7 +25,7 @@ class Controller(object):
 
         if throttle < 0:
 
-            brake = throttle
+            brake = 200
             brake = self.brake_filter.get_smoothed_value(brake)
             throttle = 0
 
