@@ -162,6 +162,6 @@ def set_waypoints_velocities_for_red_traffic_light(
             waypoint.twist.twist.linear.x = velocity
 
         # For all further waypoints, set velocity to 0
-        for index, waypoint in enumerate(waypoints[stop_id:]):
+        for waypoint in waypoints[stop_id:]:
 
             waypoint.twist.twist.linear.x = 0
