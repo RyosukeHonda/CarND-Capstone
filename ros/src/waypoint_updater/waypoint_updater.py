@@ -48,7 +48,7 @@ class WaypointUpdater(object):
         # TODO: Add other member variables you need below
         self.last_base_waypoints_lane = None
         self.upcoming_traffic_light_waypoint_id = None
-        self.last_upcoming_traffic_light_message_time = None
+        self.upcoming_traffic_light_message_time = None
         self.current_linear_velocity = None
 
         # For debugging purposes only
@@ -128,14 +128,13 @@ class WaypointUpdater(object):
 
         # TODO: Callback for /traffic_waypoint message. Implement
         self.upcoming_traffic_light_waypoint_id = msg.data
-        self.last_upcoming_traffic_light_message_time = rospy.get_rostime()
-        # rospy.logwarn("Waypoints received red light info at {}".format(msg.data))
+        self.upcoming_traffic_light_message_time = rospy.get_rostime()
 
     def is_traffic_light_message_stale(self):
 
-        ros_duration = rospy.get_rostime() - self.last_upcoming_traffic_light_message_time
+        ros_duration = rospy.get_rostime() - self.upcoming_traffic_light_message_time
         duration_in_seconds = ros_duration.secs + (1e-9 * ros_duration.nsecs)
-        return duration_in_seconds > 0.5
+        return duration_in_seconds > 0.25
 
     def obstacle_cb(self, msg):
         # TODO: Callback for /obstacle_waypoint message. We will implement it later

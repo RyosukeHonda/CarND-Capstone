@@ -138,7 +138,7 @@ def set_waypoints_velocities_for_red_traffic_light(waypoints, current_velocity, 
     distance_to_traffic_light = get_road_distance(waypoints[:traffic_light_waypoint_id])
 
     # ID at which we want car to stop - a bit in front of the light
-    offset = 1
+    offset = 2
     stop_id = traffic_light_waypoint_id - offset
 
     # Set target velocity to -1, to force car to brake to full stop. With velocity 0 braking from PID might not
