@@ -148,7 +148,7 @@ def set_waypoints_velocities_for_red_traffic_light(waypoints, current_velocity, 
     # Only start braking if we are close enough to the traffic lights - no point braking from 200 away
     if distance_to_traffic_light < 5.0 * current_velocity:
 
-        rospy.logwarn("!!! Braking !!!")
+        # rospy.logwarn("!!! Braking !!!")
 
         # Slow down gradually to 0 from current waypoint to waypoint at little bit before traffic light
         for index, waypoint in enumerate(waypoints[:stop_id]):
