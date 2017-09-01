@@ -106,25 +106,21 @@ def save_waypoints(waypoints, path):
     np.savetxt(path, waypoints_matrix)
 
 
-def get_distance_between_waypoints(waypoints, first_index, second_index):
+def get_road_distance(waypoints):
     """
-    Given waypoints list and indices of twy points in the list, compute distance between these points
+    Get road distance covered when following waypoints
     :param waypoints: list of styx_msgs.msg.Waypoint instances
-    :param first_index: integer
-    :param second_index: integer
-    :return: distance between waypoints, float
+    :return: float
     """
 
     total_distance = 0
 
-    road_segment = waypoints[first_index:second_index]
+    for index in range(1, len(waypoints)):
 
-    for index in range(1, len(road_segment)):
+        x_distance = waypoints[index].pose.pose.position.x - waypoints[index - 1].pose.pose.position.x
+        y_distance = waypoints[index].pose.pose.position.x - waypoints[index - 1].pose.pose.position.x
 
-        x_distance = road_segment[index].pose.pose.position.x - road_segment[index - 1].pose.pose.position.x
-        y_distance = road_segment[index].pose.pose.position.x - road_segment[index - 1].pose.pose.position.x
-
-        distance = np.sqrt(x_distance**2 + y_distance**2)
+        distance = np.sqrt(x_distance ** 2 + y_distance ** 2)
 
         total_distance += distance
 
@@ -139,7 +135,7 @@ def set_waypoints_velocities_for_red_traffic_light(waypoints, current_velocity, 
     :param traffic_light_waypoint_id: integer
     """
 
-    distance_to_traffic_light = get_distance_between_waypoints(waypoints, 0, traffic_light_waypoint_id)
+    distance_to_traffic_light = get_road_distance(waypoints[:traffic_light_waypoint_id])
 
     # ID at which we want car to stop - a bit in front of the light
     offset = 1
