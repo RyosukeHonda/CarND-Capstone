@@ -84,7 +84,7 @@ class TLDetector(object):
                 self.traffic_positions.lights, self.car_pose.position, waypoints_matrix)
 
             x, y = self.project_to_image_plane(traffic_light.pose.pose.position, self.car_pose)
-
+            
             image_width = config.camera_info.image_width
             image_height = config.camera_info.image_height
 
