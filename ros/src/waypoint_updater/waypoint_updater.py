@@ -94,9 +94,11 @@ class WaypointUpdater(object):
 
             if is_red_light_ahead and not self.is_traffic_light_message_stale():
 
+                relative_traffic_light_waypoint_id = \
+                    self.upcoming_traffic_light_waypoint_id - car_waypoint_index
+
                 waypoints_helper.set_waypoints_velocities_for_red_traffic_light(
-                    lane.waypoints, car_waypoint_index, self.current_linear_velocity,
-                    self.upcoming_traffic_light_waypoint_id)
+                    lane.waypoints, self.current_linear_velocity, relative_traffic_light_waypoint_id)
 
             self.final_waypoints_pub.publish(lane)
 

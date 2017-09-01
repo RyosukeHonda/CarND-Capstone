@@ -132,28 +132,24 @@ def get_distance_between_waypoints(waypoints, first_index, second_index):
 
 
 def set_waypoints_velocities_for_red_traffic_light(
-        waypoints, car_waypoint_id, current_velocity, traffic_light_waypoint_id):
+        waypoints, current_velocity, traffic_light_waypoint_id):
     """
     Set desired waypoints velocities so that car stops in front of a red light
     :param waypoints: list of styx_msgs.msg.Waypoint instances
-    :param car_waypoint_id: integer
     :param current_velocity: current velocity in car heading direction: float
     :param traffic_light_waypoint_id: integer
     """
 
-    # ID of traffic light in submitted waypoints list, as opposed to total track waypoints list
-    local_traffic_light_id = traffic_light_waypoint_id - car_waypoint_id
-
-    distance_to_traffic_light = get_distance_between_waypoints(waypoints, 0, local_traffic_light_id)
+    distance_to_traffic_light = get_distance_between_waypoints(waypoints, 0, traffic_light_waypoint_id)
 
     # ID at which we want car to stop - a bit in front of the light
     offset = 2
-    stop_id = local_traffic_light_id - offset
+    stop_id = traffic_light_waypoint_id - offset
 
     # Only start braking if we are close enough to the traffic lights - no point braking from 200 away
     if distance_to_traffic_light < 5.0 * current_velocity:
 
-        # rospy.logwarn("!!! Braking !!!")
+        rospy.logwarn("!!! Braking !!!")
 
         # Slow down gradually to 0 from current waypoint to waypoint at little bit before traffic light
         for index, waypoint in enumerate(waypoints[:stop_id]):
