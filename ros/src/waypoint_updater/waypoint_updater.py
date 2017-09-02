@@ -51,6 +51,7 @@ class WaypointUpdater(object):
         self.upcoming_traffic_light_waypoint_id = None
         self.upcoming_traffic_light_message_time = None
         self.current_linear_velocity = None
+        self.pose = None
 
         # For debugging purposes only
         self.last_saved_final_points_start_index = -10
@@ -63,61 +64,73 @@ class WaypointUpdater(object):
 
         self.previous_debug_time = rospy.get_rostime()
 
-        rospy.spin()
+        self.loop()
+
+    def loop(self):
+
+        # Based on suggestions from
+        # https://github.com/amakurin/CarND-Capstone/commit/9809bc60d51c06174f8c8bfe6c40c88ec1c39d50
+        rate = rospy.Rate(10)
+        while not rospy.is_shutdown():
+
+            arguments = [self.last_base_waypoints_lane, self.current_linear_velocity, self.pose]
+            are_arguments_available = all([x is not None for x in arguments])
+
+            # TODO: Implement
+            if are_arguments_available:
+
+                base_waypoints = self.last_base_waypoints_lane.waypoints
+
+                waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
+
+                lane = Lane()
+                lane.header.stamp = rospy.Time.now()
+
+                car_waypoint_index = waypoints_helper.get_closest_waypoint_index(self.pose.position, waypoints_matrix)
+
+                final_waypoints = waypoints_helper.get_sublist_covered(
+                    base_waypoints, car_waypoint_index, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
+
+                lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
+                lane.waypoints = lane.waypoints[LOOKBEHIND_WPS:]
+
+                for index in range(len(lane.waypoints)):
+                    lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
+
+                is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
+                                     self.upcoming_traffic_light_waypoint_id > car_waypoint_index
+
+                if is_red_light_ahead and not self.is_traffic_light_message_stale():
+                    relative_traffic_light_waypoint_id = \
+                        self.upcoming_traffic_light_waypoint_id - car_waypoint_index
+
+                    waypoints_helper.set_waypoints_velocities_for_red_traffic_light(
+                        lane.waypoints, self.current_linear_velocity, relative_traffic_light_waypoint_id)
+
+                self.final_waypoints_pub.publish(lane)
+
+                # # Save submitted path roughly every x points
+                # if self.last_saved_final_points_start_index + 50 < car_waypoint_index:
+                #
+                #    path = os.path.join(self.waypoints_dir, "final_waypoints_{}.txt".format(car_waypoint_index)
+                #     waypoints_helper.save_waypoints(lane.waypoints, path)
+                #     self.last_saved_final_points_start_index = car_waypoint_index
+                #
+                current_time = rospy.get_rostime()
+                ros_duration_since_debug = current_time - self.previous_debug_time
+
+                duration_since_debug_in_seconds = \
+                    ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
+
+                if duration_since_debug_in_seconds > 0.5:
+                    rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
+                    self.previous_debug_time = current_time
+
+            rate.sleep()
 
     def pose_cb(self, msg):
 
-        arguments = [self.last_base_waypoints_lane, self.current_linear_velocity]
-        are_arguments_available = all([x is not None for x in arguments])
-
-        # TODO: Implement
-        if are_arguments_available:
-
-            pose = msg.pose
-            base_waypoints = self.last_base_waypoints_lane.waypoints
-
-            waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
-
-            lane = Lane()
-            lane.header.stamp = rospy.Time.now()
-
-            car_waypoint_index = waypoints_helper.get_closest_waypoint_index(pose.position, waypoints_matrix)
-            final_waypoints = waypoints_helper.get_sublist_covered(base_waypoints, car_waypoint_index, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
-
-            lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
-            lane.waypoints = lane.waypoints[LOOKBEHIND_WPS:]
-
-            for index in range(len(lane.waypoints)):
-
-                lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
-
-            is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
-                self.upcoming_traffic_light_waypoint_id > car_waypoint_index
-
-            if is_red_light_ahead and not self.is_traffic_light_message_stale():
-
-                relative_traffic_light_waypoint_id = \
-                    self.upcoming_traffic_light_waypoint_id - car_waypoint_index
-
-                waypoints_helper.set_waypoints_velocities_for_red_traffic_light(
-                    lane.waypoints, self.current_linear_velocity, relative_traffic_light_waypoint_id)
-
-            self.final_waypoints_pub.publish(lane)
-
-            # # Save submitted path roughly every x points
-            # if self.last_saved_final_points_start_index + 50 < car_waypoint_index:
-            #
-            #    path = os.path.join(self.waypoints_dir, "final_waypoints_{}.txt".format(car_waypoint_index)
-            #     waypoints_helper.save_waypoints(lane.waypoints, path)
-            #     self.last_saved_final_points_start_index = car_waypoint_index
-            #
-            current_time = rospy.get_rostime()
-            ros_duration_since_debug = current_time - self.previous_debug_time
-            duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
-
-            if duration_since_debug_in_seconds > 0.5:
-                rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
-                self.previous_debug_time = current_time
+        self.pose = msg.pose
 
     def base_waypoints_cb(self, lane):
         # TODO: Implement
