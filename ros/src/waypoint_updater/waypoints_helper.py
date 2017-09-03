@@ -134,14 +134,14 @@ def get_road_distance(waypoints):
     :return: float
     """
 
-    total_distance = 0
+    total_distance = 0.0
 
     for index in range(1, len(waypoints)):
 
         x_distance = waypoints[index].pose.pose.position.x - waypoints[index - 1].pose.pose.position.x
         y_distance = waypoints[index].pose.pose.position.x - waypoints[index - 1].pose.pose.position.x
 
-        distance = np.sqrt(x_distance ** 2 + y_distance ** 2)
+        distance = np.sqrt((x_distance**2) + (y_distance**2))
 
         total_distance += distance
 
@@ -215,9 +215,9 @@ def get_braking_path_waypoints(waypoints, current_velocity, traffic_light_waypoi
         waypoint.twist.twist.linear.x = final_velocity
         braking_waypoints.append(copy.deepcopy(waypoint))
 
-    rospy.logwarn("Braking path")
-    for index, waypoint in enumerate(braking_waypoints):
-
-        rospy.logwarn("{} -> {}".format(index, waypoint.twist.twist.linear.x))
+    # rospy.logwarn("Braking path")
+    # for index, waypoint in enumerate(braking_waypoints):
+    #
+    #     rospy.logwarn("{} -> {}".format(index, waypoint.twist.twist.linear.x))
 
     return braking_waypoints

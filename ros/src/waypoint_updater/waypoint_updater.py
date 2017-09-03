@@ -117,6 +117,9 @@ class WaypointUpdater(object):
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * self.current_linear_velocity:
 
+                            rospy.logwarn("Traffic light at distance {}, computing braking path!".format(
+                                distance_to_traffic_light))
+
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
                                 lane.waypoints, self.current_linear_velocity, relative_traffic_light_waypoint_id)
@@ -136,10 +139,10 @@ class WaypointUpdater(object):
                         car_waypoint_index_in_braking_path = waypoints_helper.get_closest_waypoint_index(
                             self.pose.position, braking_path_waypoints_matrix)
 
-                        rospy.logwarn("Copying from {} with velocity {}".format(
-                            car_waypoint_index_in_braking_path,
-                            self.braking_path_waypoints[car_waypoint_index_in_braking_path].twist.twist.linear.x
-                        ))
+                        # rospy.logwarn("Copying from {} with velocity {}".format(
+                        #     car_waypoint_index_in_braking_path,
+                        #     self.braking_path_waypoints[car_waypoint_index_in_braking_path].twist.twist.linear.x
+                        # ))
 
                         for index, braking_path_waypoint in enumerate(
                                 self.braking_path_waypoints[car_waypoint_index_in_braking_path:]):
