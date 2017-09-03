@@ -88,27 +88,33 @@ def get_smoothed_out_waypoints(waypoints):
     :return: list of styx_msgs.msg.Waypoint instances
     """
 
-    xs = [waypoint.pose.pose.position.x for waypoint in waypoints]
-    ys = [waypoint.pose.pose.position.y for waypoint in waypoints]
-
-    # We will use indices as arguments when computing smoothing out function.
-    # This way we will avoid problems of steep functions if xs changed very little for large changes in ys
-    indices = list(range(len(waypoints)))
-
+    new_waypoints = [(waypoint.pose.pose.position.x, waypoint.pose.pose.position.y) for waypoint in waypoints]
+    xs, ys = zip(*new_waypoints)
+    indices = list(range(len(xs)))
     degree = 3
-    x_poly = np.polyfit(indices, xs, degree)
-    y_poly = np.polyfit(indices, ys, degree)
 
-    x_values = np.polyval(x_poly, indices)
-    y_values = np.polyval(y_poly, indices)
+    distances = []
+    for first_element, second_element in zip(new_waypoints[:-1], new_waypoints[1:]):
+        x_difference = second_element[0] - first_element[0]
+        y_difference = second_element[1] - first_element[1]
+        distance = np.sqrt(x_difference ** 2 + y_difference ** 2)
+        distances.append(distance)
+
+    distances.insert(0, 0)
+    s_list = np.array(distances).cumsum()
+    x_poly = np.polyfit(s_list, xs, degree)
+    y_poly = np.polyfit(s_list, ys, degree)
+
+    # evenly spaced out
+    s_values = np.linspace(0, sum(distances), len(s_list))
+    x_values = np.polyval(x_poly, s_values)
+    y_values = np.polyval(y_poly, s_values)
 
     smooth_waypoints = []
 
     for index, waypoint in enumerate(waypoints):
-
         waypoint.pose.pose.position.x = x_values[index]
         waypoint.pose.pose.position.y = y_values[index]
-
         smooth_waypoints.append(waypoint)
 
     return smooth_waypoints
