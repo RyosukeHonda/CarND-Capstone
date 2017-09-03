@@ -108,21 +108,37 @@ class WaypointUpdater(object):
                     # We don't have a braking path for this light yet
                     if self.braking_path_waypoints is None:
 
-                        relative_traffic_light_waypoint_id = \
-                            self.upcoming_traffic_light_waypoint_id - car_waypoint_index
+                        light_position = base_waypoints[self.upcoming_traffic_light_waypoint_id].pose.pose.position
+
+                        smooth_waypoint_matrix = waypoints_helper.get_waypoints_matrix(lane.waypoints)
+
+                        light_id_in_smooth_waypoints = waypoints_helper.get_closest_waypoint_index(
+                            light_position, smooth_waypoint_matrix)
 
                         distance_to_traffic_light = waypoints_helper.get_road_distance(
-                            lane.waypoints[:relative_traffic_light_waypoint_id])
+                            lane.waypoints[:light_id_in_smooth_waypoints])
 
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * self.current_linear_velocity:
 
+                            rospy.logwarn("Car is at")
+                            rospy.logwarn(self.last_base_waypoints_lane.waypoints[car_waypoint_index].pose.pose.position)
+
+                            rospy.logwarn("Traffic ahead at")
+                            rospy.logwarn(self.last_base_waypoints_lane.waypoints[
+                                              self.upcoming_traffic_light_waypoint_id].pose.pose.position)
+
                             rospy.logwarn("Traffic light at distance {}, computing braking path!".format(
                                 distance_to_traffic_light))
 
+                            rospy.logwarn("Traffic distance from raw waypoints: {}".format(
+                                waypoints_helper.get_road_distance(
+                                    self.last_base_waypoints_lane.waypoints[car_waypoint_index:self.upcoming_traffic_light_waypoint_id])
+                            ))
+
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
-                                lane.waypoints, self.current_linear_velocity, relative_traffic_light_waypoint_id)
+                                lane.waypoints, self.current_linear_velocity, light_id_in_smooth_waypoints)
 
                             lane.waypoints = self.braking_path_waypoints
 
