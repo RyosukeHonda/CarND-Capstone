@@ -4,6 +4,7 @@ Utilities used by waypoints_updater
 
 import numpy as np
 import rospy
+import copy
 
 
 def get_waypoints_matrix(waypoints):
@@ -180,3 +181,43 @@ def set_waypoints_velocities_for_red_traffic_light(waypoints, current_velocity, 
         for waypoint in waypoints[stop_id:]:
 
             waypoint.twist.twist.linear.x = final_velocity
+
+
+def get_braking_path_waypoints(waypoints, current_velocity, traffic_light_waypoint_id):
+    """
+    Get waypoints together with velocities such that car will stop at a traffic light
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param current_velocity: current velocity in car heading direction: float
+    :param traffic_light_waypoint_id: integer
+    :return: list of styx_msgs.msg.Waypoint instances
+    """
+
+    offset = 2
+    stop_id = traffic_light_waypoint_id - offset
+
+    # Set target velocity to -1, to force car to brake to full stop. With velocity 0 braking from PID might not
+    # be strong enough to really stop the car
+    final_velocity = -1
+
+    braking_waypoints = []
+
+    # Slow down gradually to 0 from current waypoint to waypoint at little bit before traffic light
+    for index, waypoint in enumerate(waypoints[:stop_id]):
+
+        velocity = current_velocity + ((final_velocity - current_velocity) * float(index) / float(stop_id))
+        waypoint.twist.twist.linear.x = velocity
+
+        braking_waypoints.append(copy.deepcopy(waypoint))
+
+    # For all further waypoints, set velocity to final_velocity
+    for waypoint in waypoints[stop_id:]:
+
+        waypoint.twist.twist.linear.x = final_velocity
+        braking_waypoints.append(copy.deepcopy(waypoint))
+
+    rospy.logwarn("Braking path")
+    for index, waypoint in enumerate(braking_waypoints):
+
+        rospy.logwarn("{} -> {}".format(index, waypoint.twist.twist.linear.x))
+
+    return braking_waypoints

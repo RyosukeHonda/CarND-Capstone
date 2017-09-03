@@ -53,6 +53,9 @@ class WaypointUpdater(object):
         self.current_linear_velocity = None
         self.pose = None
 
+        # Defines braking path for a red light
+        self.braking_path_waypoints = None
+
         # For debugging purposes only
         self.last_saved_final_points_start_index = -10
 
@@ -101,11 +104,56 @@ class WaypointUpdater(object):
                                      self.upcoming_traffic_light_waypoint_id > car_waypoint_index
 
                 if is_red_light_ahead and not self.is_traffic_light_message_stale():
-                    relative_traffic_light_waypoint_id = \
-                        self.upcoming_traffic_light_waypoint_id - car_waypoint_index
 
-                    waypoints_helper.set_waypoints_velocities_for_red_traffic_light(
-                        lane.waypoints, self.current_linear_velocity, relative_traffic_light_waypoint_id)
+                    # We don't have a braking path for this light yet
+                    if self.braking_path_waypoints is None:
+
+                        relative_traffic_light_waypoint_id = \
+                            self.upcoming_traffic_light_waypoint_id - car_waypoint_index
+
+                        distance_to_traffic_light = waypoints_helper.get_road_distance(
+                            lane.waypoints[:relative_traffic_light_waypoint_id])
+
+                        # If we are close enough to traffic light that need to start braking
+                        if distance_to_traffic_light < 5.0 * self.current_linear_velocity:
+
+                            # Get braking path
+                            self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
+                                lane.waypoints, self.current_linear_velocity, relative_traffic_light_waypoint_id)
+
+                            lane.waypoints = self.braking_path_waypoints
+
+                    # We already have a braking path
+                    else:
+
+                        # rospy.logwarn("Continued braking path ")
+                        # for index, waypoint in enumerate(self.braking_path_waypoints):
+                        #     rospy.logwarn("{} -> {}".format(index, waypoint.twist.twist.linear.x))
+
+                        braking_path_waypoints_matrix = waypoints_helper.get_waypoints_matrix(
+                            self.braking_path_waypoints)
+
+                        car_waypoint_index_in_braking_path = waypoints_helper.get_closest_waypoint_index(
+                            self.pose.position, braking_path_waypoints_matrix)
+
+                        rospy.logwarn("Copying from {} with velocity {}".format(
+                            car_waypoint_index_in_braking_path,
+                            self.braking_path_waypoints[car_waypoint_index_in_braking_path].twist.twist.linear.x
+                        ))
+
+                        for index, braking_path_waypoint in enumerate(
+                                self.braking_path_waypoints[car_waypoint_index_in_braking_path:]):
+
+                            lane.waypoints[index].twist.twist.linear.x = braking_path_waypoint.twist.twist.linear.x
+
+                        for waypoint in lane.waypoints[len(self.braking_path_waypoints):]:
+
+                            waypoint.twist.twist.linear.x = -1
+
+                else:
+
+                    # Set braking path to None, as we aren't braking now
+                    self.braking_path_waypoints = None
 
                 self.final_waypoints_pub.publish(lane)
 
