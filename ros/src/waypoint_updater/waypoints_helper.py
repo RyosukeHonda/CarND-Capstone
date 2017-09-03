@@ -138,7 +138,7 @@ def get_road_distance(waypoints):
     for index in range(1, len(waypoints)):
 
         x_distance = waypoints[index].pose.pose.position.x - waypoints[index - 1].pose.pose.position.x
-        y_distance = waypoints[index].pose.pose.position.x - waypoints[index - 1].pose.pose.position.x
+        y_distance = waypoints[index].pose.pose.position.y - waypoints[index - 1].pose.pose.position.y
 
         distance = np.sqrt(x_distance ** 2 + y_distance ** 2)
 
