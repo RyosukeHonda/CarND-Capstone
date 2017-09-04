@@ -80,7 +80,7 @@ def test_get_road_distance_90_deg_turn():
 
     waypoints = [first, second, third]
 
-    expected = np.sqrt(200)
+    expected = 20
     actual = waypoints_helper.get_road_distance(waypoints)
 
     assert np.isclose(expected, actual)
@@ -102,6 +102,48 @@ def test_get_road_distance_left_and_right_turn():
     waypoints = [first, second, third]
 
     expected = 2.0 * np.sqrt(200)
+    actual = waypoints_helper.get_road_distance(waypoints)
+
+    assert np.isclose(expected, actual)
+
+
+def test_get_road_distance_not_symmetrical_90_deg_turn():
+    first = styx_msgs.msg.Waypoint()
+    first.pose.pose.position.x = 0
+    first.pose.pose.position.y = 0
+
+    second = styx_msgs.msg.Waypoint()
+    second.pose.pose.position.x = 10
+    second.pose.pose.position.y = 0
+
+    third = styx_msgs.msg.Waypoint()
+    third.pose.pose.position.x = 10
+    third.pose.pose.position.y = 5
+
+    waypoints = [first, second, third]
+
+    expected = 15.0
+    actual = waypoints_helper.get_road_distance(waypoints)
+
+    assert np.isclose(expected, actual)
+
+
+def test_get_road_distance_not_symmetrical_left_and_right_turns():
+    first = styx_msgs.msg.Waypoint()
+    first.pose.pose.position.x = 0
+    first.pose.pose.position.y = 0
+
+    second = styx_msgs.msg.Waypoint()
+    second.pose.pose.position.x = 10
+    second.pose.pose.position.y = 20
+
+    third = styx_msgs.msg.Waypoint()
+    third.pose.pose.position.x = 5
+    third.pose.pose.position.y = -10
+
+    waypoints = [first, second, third]
+
+    expected = np.sqrt(500) + np.sqrt(925)
     actual = waypoints_helper.get_road_distance(waypoints)
 
     assert np.isclose(expected, actual)
