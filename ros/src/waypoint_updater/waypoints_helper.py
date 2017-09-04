@@ -221,3 +221,20 @@ def get_braking_path_waypoints(waypoints, current_velocity, traffic_light_waypoi
     #     rospy.logwarn("{} -> {}".format(index, waypoint.twist.twist.linear.x))
 
     return braking_waypoints
+
+
+def set_braking_behaviour(waypoints_ahead, braking_path_waypoints, current_position):
+
+    braking_path_waypoints_matrix = get_waypoints_matrix(braking_path_waypoints)
+
+    # Establish where the car is in previously defined braking path
+    car_waypoint_index_in_braking_path = get_closest_waypoint_index(current_position, braking_path_waypoints_matrix)
+
+    # Set braking velocities accordingly
+    for index, braking_path_waypoint in enumerate(braking_path_waypoints[car_waypoint_index_in_braking_path:]):
+
+        waypoints_ahead[index].twist.twist.linear.x = braking_path_waypoint.twist.twist.linear.x
+
+    # And for all further velocities just set them to negative
+    for waypoint in waypoints_ahead[len(braking_path_waypoints):]:
+        waypoint.twist.twist.linear.x = -1

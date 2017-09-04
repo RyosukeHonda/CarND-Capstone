@@ -92,8 +92,8 @@ class WaypointUpdater(object):
                 waypoints_ahead = waypoints_helper.get_sublist_covered(
                     base_waypoints, car_waypoint_index, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
 
-                smoothed_waypoints_ahead = waypoints_helper.get_smoothed_out_waypoints(waypoints_ahead)
-                smoothed_waypoints_ahead = smoothed_waypoints_ahead[LOOKBEHIND_WPS:]
+                smoothed_waypoints = waypoints_helper.get_smoothed_out_waypoints(waypoints_ahead)
+                smoothed_waypoints_ahead = smoothed_waypoints[LOOKBEHIND_WPS:]
 
                 for waypoint in smoothed_waypoints_ahead:
                     waypoint.twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
@@ -106,7 +106,7 @@ class WaypointUpdater(object):
 
                 if is_red_light_ahead and not self.is_traffic_light_message_stale():
 
-                    # We don't have a braking path for this light yet
+                    # If we don't have a braking path for this light yet
                     if self.braking_path_waypoints is None:
 
                         light_position = base_waypoints[self.upcoming_traffic_light_waypoint_id].pose.pose.position
@@ -121,21 +121,6 @@ class WaypointUpdater(object):
 
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * self.current_linear_velocity:
-                            #
-                            # rospy.logwarn("Car is at")
-                            # rospy.logwarn(self.last_base_waypoints_lane.waypoints[car_waypoint_index].pose.pose.position)
-                            #
-                            # rospy.logwarn("Traffic ahead at")
-                            # rospy.logwarn(self.last_base_waypoints_lane.waypoints[
-                            #                   self.upcoming_traffic_light_waypoint_id].pose.pose.position)
-                            #
-                            # rospy.logwarn("Traffic light at distance {}, computing braking path!".format(
-                            #     distance_to_traffic_light))
-                            #
-                            # rospy.logwarn("Traffic distance from raw waypoints: {}".format(
-                            #     waypoints_helper.get_road_distance(
-                            #         self.last_base_waypoints_lane.waypoints[car_waypoint_index:self.upcoming_traffic_light_waypoint_id])
-                            # ))
 
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
@@ -146,29 +131,9 @@ class WaypointUpdater(object):
                     # We already have a braking path
                     else:
 
-                        # rospy.logwarn("Continued braking path ")
-                        # for index, waypoint in enumerate(self.braking_path_waypoints):
-                        #     rospy.logwarn("{} -> {}".format(index, waypoint.twist.twist.linear.x))
-
-                        braking_path_waypoints_matrix = waypoints_helper.get_waypoints_matrix(
-                            self.braking_path_waypoints)
-
-                        car_waypoint_index_in_braking_path = waypoints_helper.get_closest_waypoint_index(
-                            self.pose.position, braking_path_waypoints_matrix)
-
-                        # rospy.logwarn("Copying from {} with velocity {}".format(
-                        #     car_waypoint_index_in_braking_path,
-                        #     self.braking_path_waypoints[car_waypoint_index_in_braking_path].twist.twist.linear.x
-                        # ))
-
-                        for index, braking_path_waypoint in enumerate(
-                                self.braking_path_waypoints[car_waypoint_index_in_braking_path:]):
-
-                            smoothed_waypoints_ahead[index].twist.twist.linear.x = braking_path_waypoint.twist.twist.linear.x
-
-                        for waypoint in smoothed_waypoints_ahead[len(self.braking_path_waypoints):]:
-
-                            waypoint.twist.twist.linear.x = -1
+                        # Set velocities for waypoints ahead based on previously computed braking path
+                        waypoints_helper.set_braking_behaviour(
+                            smoothed_waypoints_ahead, self.braking_path_waypoints, self.pose.position)
 
                 else:
 
