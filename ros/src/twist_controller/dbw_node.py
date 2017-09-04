@@ -64,7 +64,7 @@ class DBWNode(object):
         self.previous_debug_time = rospy.get_rostime()
 
         self.throttle_pid = pid.PID(kp=0.2, ki=0.0, kd=0.1, mn=decel_limit, mx=0.5 * accel_limit)
-        self.brake_pid = pid.PID(kp=100.0, ki=0.0, kd=0.1, mn=0, mx=200)
+        self.brake_pid = pid.PID(kp=100.0, ki=0.0, kd=0.1, mn=0, mx=2000)
         self.steering_pid = pid.PID(kp=1.0, ki=0.001, kd=0.5, mn=-max_steer_angle, mx=max_steer_angle)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
@@ -115,10 +115,15 @@ class DBWNode(object):
                 throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
 
+                # Quick hack - if target velocity is very small, set throttle to 0
+                if self.final_waypoints[1].twist.twist.linear.x < 0.1:
+                    throttle = 0
+
                 # ros_duration_since_debug = current_time - self.previous_debug_time
                 # duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
                 # if duration_since_debug_in_seconds > 0.5:
                 #
+                #     rospy.logwarn("Target velocity: {}".format(self.final_waypoints[1].twist.twist.linear.x))
                 #     rospy.logwarn("Linear velocity error: {}".format(linear_velocity_error))
                 #     rospy.logwarn("Throttle command: {}".format(throttle))
                 #     rospy.logwarn("Brake command: {}".format(brake))

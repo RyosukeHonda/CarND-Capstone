@@ -192,12 +192,12 @@ def get_braking_path_waypoints(waypoints, current_velocity, traffic_light_waypoi
     :return: list of styx_msgs.msg.Waypoint instances
     """
 
-    offset = 2
+    offset = 0
     stop_id = traffic_light_waypoint_id - offset
 
     # Set target velocity to -1, to force car to brake to full stop. With velocity 0 braking from PID might not
     # be strong enough to really stop the car
-    final_velocity = -1
+    final_velocity = -0.5
 
     braking_waypoints = []
 
