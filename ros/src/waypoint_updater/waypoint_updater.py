@@ -30,7 +30,7 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 LOOKAHEAD_WPS = 50  # Number of waypoints we will publish. You can change this number
 LOOKBEHIND_WPS = 50
 
-LOOK_BEHIND_METRES = 50
+LOOK_BEHIND_METRES = 10
 LOOK_AHEAD_METRES = 50
 
 
@@ -96,7 +96,7 @@ class WaypointUpdater(object):
                     base_waypoints, self.pose.position, LOOK_AHEAD_METRES, LOOKBEHIND_WPS)
 
                 for waypoint in smoothed_waypoints_ahead:
-                    waypoint.twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
+                    waypoint.twist.twist.linear.x = 9.0 * miles_per_hour_to_metres_per_second
 
                 waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
                 car_waypoint_index = waypoints_helper.get_closest_waypoint_index(self.pose.position, waypoints_matrix)
@@ -125,14 +125,6 @@ class WaypointUpdater(object):
 
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * np.power(self.current_linear_velocity, 1.2):
-
-                            rospy.logwarn("Waypoints ahead distance is: {}".format(
-                                waypoints_helper.get_road_distance(smoothed_waypoints_ahead)
-                            ))
-
-                            rospy.logwarn("Threshold distance is: {}".format(5.0 * np.power(self.current_linear_velocity, 1.2)))
-
-                            rospy.logwarn("Light detected from distance: {}".format(distance_to_traffic_light))
 
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(

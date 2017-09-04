@@ -19,8 +19,8 @@ class Controller(object):
 
     def control(self, linear_velocity_error, cross_track_error, sample_time):
 
-        # When car needs to brake fast, throttle pid error is forces positive throttle until error catches up
-        # (goes down). Therefore just reset it if large braking command is necessary
+        # When car needs to brake fast, throttle pid error forces positive throttle until error goes down
+        # Therefore just reset it if large braking command is necessary
         if linear_velocity_error < -1.0:
             self.throttle_pid.error_integral = 0
 
