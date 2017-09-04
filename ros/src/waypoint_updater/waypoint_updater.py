@@ -141,16 +141,7 @@ class WaypointUpdater(object):
                 lane.waypoints = smoothed_waypoints_ahead
 
                 self.final_waypoints_pub.publish(lane)
-
-                current_time = rospy.get_rostime()
-                ros_duration_since_debug = current_time - self.previous_debug_time
-
-                duration_since_debug_in_seconds = \
-                    ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
-
-                if duration_since_debug_in_seconds > 0.5:
-                    rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
-                    self.previous_debug_time = current_time
+                self.print_car_waypoint(car_waypoint_index)
 
             rate.sleep()
 
@@ -197,6 +188,24 @@ class WaypointUpdater(object):
 
     def velocity_cb(self, message):
         self.current_linear_velocity = message.twist.linear.x
+
+    def print_car_waypoint(self, car_waypoint_index):
+        """
+        Print car waypoint to rospy.logwarn(). Only prints out if enough time has passed since last printout
+        :param car_waypoint_index: integer
+        :param print_interval: float, duration in seconds
+        """
+
+        current_time = rospy.get_rostime()
+        ros_duration_since_debug = current_time - self.previous_debug_time
+
+        duration_since_debug_in_seconds = \
+            ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
+
+        if duration_since_debug_in_seconds > 0.5:
+            rospy.logwarn("Current waypoint: {}".format(car_waypoint_index))
+            self.previous_debug_time = current_time
+
 
 if __name__ == '__main__':
     try:
