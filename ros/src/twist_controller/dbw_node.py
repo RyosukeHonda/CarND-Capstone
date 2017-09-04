@@ -64,7 +64,7 @@ class DBWNode(object):
         self.previous_debug_time = rospy.get_rostime()
 
         self.throttle_pid = pid.PID(kp=0.2, ki=0.005, kd=0.1, mn=decel_limit, mx=0.5 * accel_limit)
-        self.brake_pid = pid.PID(kp=100.0, ki=0.01, kd=0.1, mn=brake_deadband, mx=2000)
+        self.brake_pid = pid.PID(kp=100.0, ki=0.001, kd=0.1, mn=brake_deadband, mx=2000)
         self.steering_pid = pid.PID(kp=1.0, ki=0.001, kd=0.5, mn=-max_steer_angle, mx=max_steer_angle)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
@@ -114,12 +114,6 @@ class DBWNode(object):
                 # Primitive command
                 throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
-
-                # Quick hack - if target velocity is very small, set throttle to 0. This is to avoid
-                # car making very small throttle commands when seemingly stopped as it tries to inch closes
-                # to stop line
-                if self.final_waypoints[1].twist.twist.linear.x < 0.1:
-                    throttle = 0
 
                 self.publish(throttle, brake, steering)
                 # self.print_debug_info(throttle, brake, steering, linear_velocity_error)

@@ -27,8 +27,12 @@ as well as to verify your TL classifier.
 TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 '''
 
-LOOKAHEAD_WPS = 50 # Number of waypoints we will publish. You can change this number
-LOOKBEHIND_WPS = 50 # coudl be reduced
+LOOKAHEAD_WPS = 50  # Number of waypoints we will publish. You can change this number
+LOOKBEHIND_WPS = 50
+
+LOOK_BEHIND_METRES = 10
+LOOK_AHEAD_METRES = 50
+
 
 miles_per_hour_to_metres_per_second = 0.44704
 
@@ -85,11 +89,14 @@ class WaypointUpdater(object):
 
                 base_waypoints = self.last_base_waypoints_lane.waypoints
 
-                smoothed_waypoints_ahead = waypoints_helper.get_smooth_waypoints_ahead(
-                    base_waypoints, self.pose.position, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
+                # smoothed_waypoints_ahead = waypoints_helper.get_smooth_waypoints_ahead(
+                #     base_waypoints, self.pose.position, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
+
+                smoothed_waypoints_ahead = waypoints_helper.get_dynamic_smooth_waypoints_ahead(
+                    base_waypoints, self.pose.position, LOOK_AHEAD_METRES, LOOKBEHIND_WPS)
 
                 for waypoint in smoothed_waypoints_ahead:
-                    waypoint.twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
+                    waypoint.twist.twist.linear.x = 9.0 * miles_per_hour_to_metres_per_second
 
                 waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
                 car_waypoint_index = waypoints_helper.get_closest_waypoint_index(self.pose.position, waypoints_matrix)
@@ -195,7 +202,6 @@ class WaypointUpdater(object):
         """
         Print car waypoint to rospy.logwarn(). Only prints out if enough time has passed since last printout
         :param car_waypoint_index: integer
-        :param print_interval: float, duration in seconds
         """
 
         current_time = rospy.get_rostime()
