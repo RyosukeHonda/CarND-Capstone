@@ -63,8 +63,8 @@ class DBWNode(object):
         self.previous_loop_time = rospy.get_rostime()
         self.previous_debug_time = rospy.get_rostime()
 
-        self.throttle_pid = pid.PID(kp=0.2, ki=0.0, kd=0.1, mn=decel_limit, mx=0.5 * accel_limit)
-        self.brake_pid = pid.PID(kp=100.0, ki=0.0, kd=0.1, mn=0, mx=2000)
+        self.throttle_pid = pid.PID(kp=0.2, ki=0.005, kd=0.1, mn=decel_limit, mx=0.5 * accel_limit)
+        self.brake_pid = pid.PID(kp=100.0, ki=0.01, kd=0.1, mn=brake_deadband, mx=2000)
         self.steering_pid = pid.PID(kp=1.0, ki=0.001, kd=0.5, mn=-max_steer_angle, mx=max_steer_angle)
 
         self.steer_pub = rospy.Publisher('/vehicle/steering_cmd',
@@ -122,7 +122,7 @@ class DBWNode(object):
                     throttle = 0
 
                 self.publish(throttle, brake, steering)
-                # self.print_debug_info(throttle, brake, steering)
+                # self.print_debug_info(throttle, brake, steering, linear_velocity_error)
 
             rate.sleep()
 
@@ -155,6 +155,7 @@ class DBWNode(object):
         if self.is_drive_by_wire_enable is True:
 
             self.throttle_pid.reset()
+            self.brake_pid.reset()
             self.steering_pid.reset()
 
     def current_velocity_cb(self, msg):
@@ -166,7 +167,7 @@ class DBWNode(object):
     def final_waypoints_cb(self, msg):
         self.final_waypoints = msg.waypoints
 
-    def print_debug_info(self, throttle, brake, steering):
+    def print_debug_info(self, throttle, brake, steering, linear_velocity_error):
         """
         Print debugging commands. Only prints out if enough time has passed since last printout
         """
@@ -177,6 +178,7 @@ class DBWNode(object):
 
         if duration_since_debug_in_seconds > 0.5:
 
+            rospy.logwarn("linear_velocity_error: {}".format(linear_velocity_error))
             rospy.logwarn("Throttle command: {}".format(throttle))
             rospy.logwarn("Brake command: {}".format(brake))
 
