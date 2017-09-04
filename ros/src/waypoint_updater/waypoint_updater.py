@@ -47,7 +47,8 @@ class WaypointUpdater(object):
         self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
 
         # TODO: Add other member variables you need below
-        self.last_base_waypoints_lane = None
+        self.last_base_waypoints_lane = \
+            None
         self.upcoming_traffic_light_waypoint_id = None
         self.upcoming_traffic_light_message_time = None
         self.current_linear_velocity = None
@@ -86,22 +87,22 @@ class WaypointUpdater(object):
 
                 waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
 
-                lane = Lane()
-                lane.header.stamp = rospy.Time.now()
-
                 car_waypoint_index = waypoints_helper.get_closest_waypoint_index(self.pose.position, waypoints_matrix)
 
-                final_waypoints = waypoints_helper.get_sublist_covered(
+                waypoints_ahead = waypoints_helper.get_sublist_covered(
                     base_waypoints, car_waypoint_index, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
 
-                lane.waypoints = waypoints_helper.get_smoothed_out_waypoints(final_waypoints)
-                lane.waypoints = lane.waypoints[LOOKBEHIND_WPS:]
+                smoothed_waypoints_ahead = waypoints_helper.get_smoothed_out_waypoints(waypoints_ahead)
+                smoothed_waypoints_ahead = smoothed_waypoints_ahead[LOOKBEHIND_WPS:]
 
-                for index in range(len(lane.waypoints)):
-                    lane.waypoints[index].twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
+                for waypoint in smoothed_waypoints_ahead:
+                    waypoint.twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
 
+                # Check if we received report of a traffic light, it is ahead of us, but within range of waypoints
+                # we are considering (not too far ahead)
                 is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
-                                     self.upcoming_traffic_light_waypoint_id > car_waypoint_index
+                                     self.upcoming_traffic_light_waypoint_id > car_waypoint_index and \
+                                     self.upcoming_traffic_light_waypoint_id - car_waypoint_index < len(smoothed_waypoints_ahead)
 
                 if is_red_light_ahead and not self.is_traffic_light_message_stale():
 
@@ -110,13 +111,13 @@ class WaypointUpdater(object):
 
                         light_position = base_waypoints[self.upcoming_traffic_light_waypoint_id].pose.pose.position
 
-                        smooth_waypoint_matrix = waypoints_helper.get_waypoints_matrix(lane.waypoints)
+                        smooth_waypoint_matrix = waypoints_helper.get_waypoints_matrix(smoothed_waypoints_ahead)
 
                         light_id_in_smooth_waypoints = waypoints_helper.get_closest_waypoint_index(
                             light_position, smooth_waypoint_matrix)
 
                         distance_to_traffic_light = waypoints_helper.get_road_distance(
-                            lane.waypoints[:light_id_in_smooth_waypoints])
+                            smoothed_waypoints_ahead[:light_id_in_smooth_waypoints])
 
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * self.current_linear_velocity:
@@ -138,9 +139,9 @@ class WaypointUpdater(object):
 
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
-                                lane.waypoints, self.current_linear_velocity, light_id_in_smooth_waypoints)
+                                smoothed_waypoints_ahead, self.current_linear_velocity, light_id_in_smooth_waypoints)
 
-                            lane.waypoints = self.braking_path_waypoints
+                            smoothed_waypoints_ahead = self.braking_path_waypoints
 
                     # We already have a braking path
                     else:
@@ -163,9 +164,9 @@ class WaypointUpdater(object):
                         for index, braking_path_waypoint in enumerate(
                                 self.braking_path_waypoints[car_waypoint_index_in_braking_path:]):
 
-                            lane.waypoints[index].twist.twist.linear.x = braking_path_waypoint.twist.twist.linear.x
+                            smoothed_waypoints_ahead[index].twist.twist.linear.x = braking_path_waypoint.twist.twist.linear.x
 
-                        for waypoint in lane.waypoints[len(self.braking_path_waypoints):]:
+                        for waypoint in smoothed_waypoints_ahead[len(self.braking_path_waypoints):]:
 
                             waypoint.twist.twist.linear.x = -1
 
@@ -173,6 +174,10 @@ class WaypointUpdater(object):
 
                     # Set braking path to None, as we aren't braking now
                     self.braking_path_waypoints = None
+
+                lane = Lane()
+                lane.header.stamp = rospy.Time.now()
+                lane.waypoints = smoothed_waypoints_ahead
 
                 self.final_waypoints_pub.publish(lane)
 
