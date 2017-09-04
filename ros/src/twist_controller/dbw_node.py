@@ -115,22 +115,14 @@ class DBWNode(object):
                 throttle, brake, steering = self.controller.control(
                     linear_velocity_error, cross_track_error, duration_in_seconds)
 
-                # Quick hack - if target velocity is very small, set throttle to 0
+                # Quick hack - if target velocity is very small, set throttle to 0. This is to avoid
+                # car making very small throttle commands when seemingly stopped as it tries to inch closes
+                # to stop line
                 if self.final_waypoints[1].twist.twist.linear.x < 0.1:
                     throttle = 0
 
-                # ros_duration_since_debug = current_time - self.previous_debug_time
-                # duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
-                # if duration_since_debug_in_seconds > 0.5:
-                #
-                #     rospy.logwarn("Target velocity: {}".format(self.final_waypoints[1].twist.twist.linear.x))
-                #     rospy.logwarn("Linear velocity error: {}".format(linear_velocity_error))
-                #     rospy.logwarn("Throttle command: {}".format(throttle))
-                #     rospy.logwarn("Brake command: {}".format(brake))
-                #
-                #     self.previous_debug_time = current_time
-
                 self.publish(throttle, brake, steering)
+                # self.print_debug_info(throttle, brake, steering)
 
             rate.sleep()
 
@@ -173,6 +165,22 @@ class DBWNode(object):
 
     def final_waypoints_cb(self, msg):
         self.final_waypoints = msg.waypoints
+
+    def print_debug_info(self, throttle, brake, steering):
+        """
+        Print debugging commands. Only prints out if enough time has passed since last printout
+        """
+
+        current_time = rospy.get_rostime()
+        ros_duration_since_debug = current_time - self.previous_debug_time
+        duration_since_debug_in_seconds = ros_duration_since_debug.secs + (1e-9 * ros_duration_since_debug.nsecs)
+
+        if duration_since_debug_in_seconds > 0.5:
+
+            rospy.logwarn("Throttle command: {}".format(throttle))
+            rospy.logwarn("Brake command: {}".format(brake))
+
+            self.previous_debug_time = current_time
 
 
 if __name__ == '__main__':
