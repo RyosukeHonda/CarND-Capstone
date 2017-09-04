@@ -96,9 +96,10 @@ class WaypointUpdater(object):
 
                 # Check if we received report of a traffic light, it is ahead of us, but within range of waypoints
                 # we are considering (not too far ahead)
-                is_red_light_ahead = self.upcoming_traffic_light_waypoint_id is not None and \
-                                     self.upcoming_traffic_light_waypoint_id > car_waypoint_index and \
-                                     self.upcoming_traffic_light_waypoint_id - car_waypoint_index < len(smoothed_waypoints_ahead)
+                is_red_light_ahead = \
+                    self.upcoming_traffic_light_waypoint_id is not None and \
+                    self.upcoming_traffic_light_waypoint_id > car_waypoint_index and \
+                    self.upcoming_traffic_light_waypoint_id - car_waypoint_index < len(smoothed_waypoints_ahead)
 
                 if is_red_light_ahead and not self.is_traffic_light_message_stale():
 
@@ -122,6 +123,7 @@ class WaypointUpdater(object):
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
                                 smoothed_waypoints_ahead, self.current_linear_velocity, light_id_in_smooth_waypoints)
 
+                            # Set waypoints ahead of car to just computed braking path
                             smoothed_waypoints_ahead = self.braking_path_waypoints
 
                     # We already have a braking path
