@@ -224,6 +224,12 @@ def get_braking_path_waypoints(waypoints, current_velocity, traffic_light_waypoi
 
 
 def set_braking_behaviour(waypoints_ahead, braking_path_waypoints, current_position):
+    """
+    Given waypoints ahead and a braking path, set velocities for waypoints ahed
+    :param waypoints_ahead: list of styx_msgs.msg.Waypoint instances
+    :param braking_path_waypoints: list of styx_msgs.msg.Waypoint instances
+    :param current_position: current car position
+    """
 
     braking_path_waypoints_matrix = get_waypoints_matrix(braking_path_waypoints)
 
@@ -238,3 +244,24 @@ def set_braking_behaviour(waypoints_ahead, braking_path_waypoints, current_posit
     # And for all further velocities just set them to negative
     for waypoint in waypoints_ahead[len(braking_path_waypoints):]:
         waypoint.twist.twist.linear.x = -1
+
+
+def get_smooth_waypoints_ahead(base_waypoints, car_position, look_ahead_waypoints_count, look_behind_waypoints_count):
+    """
+    Given base waypoints, car position and look ahead and behind count, compute a smooth path ahead of the car
+    :param base_waypoints: list of styx_msgs.msg.Waypoint instances
+    :param car_position: car position in base_waypoints
+    :param look_ahead_waypoints_count: integer
+    :param look_behind_waypoints_count: integer
+    :return: list of styx_msgs.msg.Waypoint instances
+    """
+
+    waypoints_matrix = get_waypoints_matrix(base_waypoints)
+
+    car_waypoint_index = get_closest_waypoint_index(car_position, waypoints_matrix)
+
+    waypoints_ahead = get_sublist_covered(
+        base_waypoints, car_waypoint_index, look_ahead_waypoints_count, look_behind_waypoints_count)
+
+    smoothed_waypoints = get_smoothed_out_waypoints(waypoints_ahead)
+    return smoothed_waypoints[look_behind_waypoints_count:]

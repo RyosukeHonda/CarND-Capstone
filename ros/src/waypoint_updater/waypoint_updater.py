@@ -85,18 +85,14 @@ class WaypointUpdater(object):
 
                 base_waypoints = self.last_base_waypoints_lane.waypoints
 
-                waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
-
-                car_waypoint_index = waypoints_helper.get_closest_waypoint_index(self.pose.position, waypoints_matrix)
-
-                waypoints_ahead = waypoints_helper.get_sublist_covered(
-                    base_waypoints, car_waypoint_index, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
-
-                smoothed_waypoints = waypoints_helper.get_smoothed_out_waypoints(waypoints_ahead)
-                smoothed_waypoints_ahead = smoothed_waypoints[LOOKBEHIND_WPS:]
+                smoothed_waypoints_ahead = waypoints_helper.get_smooth_waypoints_ahead(
+                    base_waypoints, self.pose.position, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
 
                 for waypoint in smoothed_waypoints_ahead:
                     waypoint.twist.twist.linear.x = 15.0 * miles_per_hour_to_metres_per_second
+
+                waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
+                car_waypoint_index = waypoints_helper.get_closest_waypoint_index(self.pose.position, waypoints_matrix)
 
                 # Check if we received report of a traffic light, it is ahead of us, but within range of waypoints
                 # we are considering (not too far ahead)
@@ -146,13 +142,6 @@ class WaypointUpdater(object):
 
                 self.final_waypoints_pub.publish(lane)
 
-                # # Save submitted path roughly every x points
-                # if self.last_saved_final_points_start_index + 50 < car_waypoint_index:
-                #
-                #    path = os.path.join(self.waypoints_dir, "final_waypoints_{}.txt".format(car_waypoint_index)
-                #     waypoints_helper.save_waypoints(lane.waypoints, path)
-                #     self.last_saved_final_points_start_index = car_waypoint_index
-                #
                 current_time = rospy.get_rostime()
                 ros_duration_since_debug = current_time - self.previous_debug_time
 
