@@ -41,7 +41,7 @@ class TLDetector(object):
         rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb, queue_size=1)
         rospy.Subscriber('/camera/image_raw', Image, self.image_cb, queue_size=1)
 
-        self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
+        self.upcoming_stop_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
         self.image_pub = rospy.Publisher('/camera/my_image', Image, queue_size=1)
 
         self.bridge = CvBridge()
@@ -103,8 +103,8 @@ class TLDetector(object):
                 marked_image = self.bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
                 self.image_pub.publish(marked_image)
 
-                if traffic_light_state == TrafficLight.RED:
-                    self.upcoming_red_light_pub.publish(Int32(traffic_light_waypoint_index))
+                if traffic_light_state == TrafficLight.RED or traffic_light == TrafficLight.YELLOW:
+                    self.upcoming_stop_light_pub.publish(Int32(traffic_light_waypoint_index))
 
     def waypoints_cb(self, lane):
         self.waypoints = lane.waypoints

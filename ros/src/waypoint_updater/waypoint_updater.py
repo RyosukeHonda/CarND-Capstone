@@ -96,12 +96,12 @@ class WaypointUpdater(object):
 
                 # Check if we received report of a traffic light, it is ahead of us, but within range of waypoints
                 # we are considering (not too far ahead)
-                is_red_light_ahead = \
+                is_stop_light_ahead = \
                     self.upcoming_traffic_light_waypoint_id is not None and \
                     self.upcoming_traffic_light_waypoint_id > car_waypoint_index and \
                     self.upcoming_traffic_light_waypoint_id - car_waypoint_index < len(smoothed_waypoints_ahead)
 
-                if is_red_light_ahead and not self.is_traffic_light_message_stale():
+                if is_stop_light_ahead and not self.is_traffic_light_message_stale():
 
                     # If we don't have a braking path for this light yet
                     if self.braking_path_waypoints is None:
