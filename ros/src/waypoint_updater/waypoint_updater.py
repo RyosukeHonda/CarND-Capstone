@@ -121,21 +121,21 @@ class WaypointUpdater(object):
 
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * self.current_linear_velocity:
-
-                            rospy.logwarn("Car is at")
-                            rospy.logwarn(self.last_base_waypoints_lane.waypoints[car_waypoint_index].pose.pose.position)
-
-                            rospy.logwarn("Traffic ahead at")
-                            rospy.logwarn(self.last_base_waypoints_lane.waypoints[
-                                              self.upcoming_traffic_light_waypoint_id].pose.pose.position)
-
-                            rospy.logwarn("Traffic light at distance {}, computing braking path!".format(
-                                distance_to_traffic_light))
-
-                            rospy.logwarn("Traffic distance from raw waypoints: {}".format(
-                                waypoints_helper.get_road_distance(
-                                    self.last_base_waypoints_lane.waypoints[car_waypoint_index:self.upcoming_traffic_light_waypoint_id])
-                            ))
+                            #
+                            # rospy.logwarn("Car is at")
+                            # rospy.logwarn(self.last_base_waypoints_lane.waypoints[car_waypoint_index].pose.pose.position)
+                            #
+                            # rospy.logwarn("Traffic ahead at")
+                            # rospy.logwarn(self.last_base_waypoints_lane.waypoints[
+                            #                   self.upcoming_traffic_light_waypoint_id].pose.pose.position)
+                            #
+                            # rospy.logwarn("Traffic light at distance {}, computing braking path!".format(
+                            #     distance_to_traffic_light))
+                            #
+                            # rospy.logwarn("Traffic distance from raw waypoints: {}".format(
+                            #     waypoints_helper.get_road_distance(
+                            #         self.last_base_waypoints_lane.waypoints[car_waypoint_index:self.upcoming_traffic_light_waypoint_id])
+                            # ))
 
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
