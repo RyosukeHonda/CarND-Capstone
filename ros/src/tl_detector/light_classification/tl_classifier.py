@@ -47,6 +47,7 @@ class TLClassifierCV(object):
 
         return area, extracted_image
 
+
 class TLClassifier(object):
 
 	def __init__(self):
@@ -61,7 +62,7 @@ class TLClassifier(object):
 		"""
 		Determines the color of the traffic light in image
 
-		Args;
+		Args:
 			image (cv::Mat): image containing the traffic light
 
 		Returns:
@@ -78,8 +79,8 @@ class TLClassifier(object):
 
 
 	def process_image(self, image):
-		desired_image = (128,128)
-		image = cv2.resize(image, desired_image, cv2.INTER_LINEAR)
+		desired_shape = (128,128)
+		image = cv2.resize(image, desired_shape, cv2.INTER_LINEAR)
 		image = image.astype('float32') / 255
 		processed_image = image.reshape(1, *image.shape)
 
