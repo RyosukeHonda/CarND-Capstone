@@ -67,6 +67,7 @@ def get_sublist(elements, start_index, size):
     doubled_elements = elements + elements[:size]
     return doubled_elements[start_index: start_index + size]
 
+
 def get_sublist_covered(base_points, start_index, size_ahead, size_behind):
     """
     Given a list of elements, start index and size of sublist, returns
@@ -81,6 +82,7 @@ def get_sublist_covered(base_points, start_index, size_ahead, size_behind):
     behind_start_index = len(base_points) - size_behind
     extended_points = base_points[behind_start_index:] + base_points + base_points[:size_ahead]
     return extended_points[start_index: (start_index + size_ahead + size_behind)]
+
 
 def get_smoothed_out_waypoints(waypoints):
     """
@@ -265,3 +267,78 @@ def get_smooth_waypoints_ahead(base_waypoints, car_position, look_ahead_waypoint
 
     smoothed_waypoints = get_smoothed_out_waypoints(waypoints_ahead)
     return smoothed_waypoints[look_behind_waypoints_count:]
+
+
+def get_index_of_waypoints_metres_behind(waypoints, index, distance):
+    """
+    Return index to waypoints index that's located approximately distance (in metres) behind provided index
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param index: integer
+    :param distance: float
+    :return: integer
+    """
+
+    behind_index = max(0, index - int(distance))
+
+    while get_road_distance(waypoints[behind_index:index]) < distance:
+
+        behind_index -= 10
+
+        # Quick and dirty solution so we don't get stack when index is close to waypoints start
+        if behind_index < 0:
+
+            return 0
+
+    return behind_index
+
+
+def get_index_of_waypoints_metres_ahead(waypoints, index, distance):
+    """
+    Return index to waypoints index that's located approximately distance (in metres) ahead provided index
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param index: integer
+    :param distance: float
+    :return: integer
+    """
+
+    ahead_index = min(len(waypoints), index + int(distance))
+
+    while get_road_distance(waypoints[index:ahead_index]) < distance:
+
+        ahead_index += 10
+
+        # Quick and dirty solution so we don't get stack when index is close to waypoints end
+        if ahead_index >= len(waypoints):
+
+            return len(waypoints) - 1
+
+    return ahead_index
+
+
+def get_dynamic_smooth_waypoints_ahead(waypoints, car_position, look_ahead_metres, look_behind_metres):
+    """
+    Given base waypoints, car position and look ahead and behind metres, compute a smooth path ahead of the car.
+    Except for corner cases near track end, waypoints ahead should stretch at least look_ahead_metres
+    in front of the car
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param car_position: car position in base_waypoints
+    :param look_ahead_metres: float, roughly how many metres ahead of the car we should return
+    :param look_behind_metres: float, roughly how many metres behind the car we should consider to smooth the path
+    :return: list of styx_msgs.msg.Waypoint instances
+    """
+
+    waypoints_matrix = get_waypoints_matrix(waypoints)
+
+    car_waypoint_index = get_closest_waypoint_index(car_position, waypoints_matrix)
+
+    behind_index = get_index_of_waypoints_metres_behind(waypoints, car_waypoint_index, look_behind_metres)
+    ahead_index = get_index_of_waypoints_metres_ahead(waypoints, car_waypoint_index, look_ahead_metres)
+
+    waypoints_ahead = get_sublist_covered(
+        waypoints, car_waypoint_index, car_waypoint_index - behind_index, ahead_index - car_waypoint_index)
+
+    smoothed_waypoints = get_smoothed_out_waypoints(waypoints_ahead)
+
+    return smoothed_waypoints[car_waypoint_index - behind_index:]
+
+
