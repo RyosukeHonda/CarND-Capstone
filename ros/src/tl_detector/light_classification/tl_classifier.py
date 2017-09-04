@@ -14,7 +14,8 @@ class TLClassifierCV(object):
         self.upper = np.array([180, 255, 255])
 
     def get_classification(self, image):
-        """Determines the color of the traffic light in the image
+        """
+        Determines the color of the traffic light in the image
 
         Args:
             image (cv::Mat): image containing the traffic light
@@ -46,7 +47,6 @@ class TLClassifierCV(object):
 
         return area, extracted_image
 
-
 class TLClassifier(object):
 
 	def __init__(self):
@@ -58,28 +58,29 @@ class TLClassifier(object):
 		self.graph = tf.get_default_graph()
 
 	def get_classification(self, image):
-		"""Determines the color of the traffic light in the image
+		"""
+		Determines the color of the traffic light in image
 
-        Args:
-            image (cv::Mat): image containing the traffic light
+		Args;
+			image (cv::Mat): image containing the traffic light
 
-        Returns:
-            int: ID of traffic light color (specified in styx_msgs/TrafficLight)
+		Returns:
+			int: ID of traffic light color (specified in styx_msgs/TrafficLight)
+		"""
+		processed_image = self.process_image(image)
+		with self.graph.as_default():
+			predicted_class_id = self.model.predict_classes(processed_image, batch_size = 1, verbose = 0)
+			states_map = {0: TrafficLight.RED, 1: TrafficLight.YELLOW, 2: TrafficLight.GREEN}
+			# Get code for predicted state, return unknown if couldn't classify
+			state = states_map.get(predicted_class_id[0], TrafficLight.UNKNOWN)
 
-        """
+		return state
 
-        	processed_image = self.process_image(image)
-        	with self.graph.as_default():
-        		predicted_class_id = self.model.predict_classes(processed_image, batch_size = 1, verbose = 0)
-        		states_map = {0: TrafficLight.RED, 1: TrafficLight.YELLOW, 2: TrafficLight.GREEN}
-        		# Get code for predicted state, return unknown if couldn't classify
-        		state = states_map.get(predicted_class_id[0], TrafficLight.UNKNOWN)
-        	return state
 
 	def process_image(self, image):
-		desired_shape = (128, 128)
-		image = cv2.resize(image, desired_shape, cv2.INTER_LINEAR)
+		desired_image = (128,128)
+		image = cv2.resize(image, desired_image, cv2.INTER_LINEAR)
 		image = image.astype('float32') / 255
 		processed_image = image.reshape(1, *image.shape)
 
-		return processed_image 
+		return processed_image
