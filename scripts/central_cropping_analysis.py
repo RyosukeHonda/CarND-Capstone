@@ -96,8 +96,8 @@ def main():
 
     model = utilities.get_model(model_path, weight_path)
 
-    # data_dir = "/home/student/data_partition/data/bag_dump_loop_with_traffic_light/"
-    data_dir = "/home/student/data_partition/data/bag_dump_just_traffic_light/"
+    data_dir = "/home/student/data_partition/data/bag_dump_loop_with_traffic_light/"
+    # data_dir = "/home/student/data_partition/data/bag_dump_just_traffic_light/"
 
     red_images = utilities.get_images_at_path(os.path.join(data_dir, "red"))
     yellow_images = utilities.get_images_at_path(os.path.join(data_dir, "yellow"))
@@ -108,6 +108,7 @@ def main():
     images_map = {0: red_images, 1: yellow_images, 2: green_images, 3: other_images}
 
     relative_margins = np.arange(0, 0.5, 0.05)
+    red_confidence_thresholds = np.arange(0.4, 1.1, 0.1)
 
     results = []
 
@@ -116,22 +117,25 @@ def main():
         cropped_images_map = {}
 
         for class_id, images in images_map.items():
-
             cropped_images = [crop_image_with_relative_margin(image, relative_margin) for image in images]
             cropped_images_map[class_id] = cropped_images
 
-        matrix = get_confusion_matrix(model, cropped_images_map, red_confidence=0.5)
-        results.append((relative_margin, matrix))
+        for red_confidence_threshold in red_confidence_thresholds:
 
-    sorted_results = sorted(results, key=lambda x: np.sum(np.diagonal(x[1])), reverse=True)
+            matrix = get_confusion_matrix(model, cropped_images_map, red_confidence=red_confidence_threshold)
+            results.append((relative_margin, red_confidence_threshold, matrix))
+
+    sorted_results = sorted(results, key=lambda x: np.sum(np.diagonal(x[2])), reverse=True)
 
     print("Dataset: {}".format(data_dir))
     print("Best result:")
 
-    relative_margin = sorted_results[0][0]
-    matrix = sorted_results[0][1]
+    best_result = sorted_results[0]
+    relative_margin = best_result[0]
+    red_confidence_threshold = best_result[1]
+    matrix = best_result[2]
 
-    print("Relative margin: {}".format(relative_margin))
+    print("Relative margin: {}, red confidence threshold: {}".format(relative_margin, red_confidence_threshold))
     print("Order: red, yellow, green, others")
     print(matrix)
 
