@@ -5,11 +5,19 @@ Crops are centered on image center
 
 import os
 import glob
+import pprint
 
 import keras
 import cv2
 import tqdm
 import numpy as np
+
+
+
+def get_images_as_path(path):
+
+    paths = sorted(glob.glob(os.path.join(path, "*.jpg")))
+    return [cv2.imread(path) for path in paths]
 
 
 def get_model(model_path, weight_path):
@@ -48,17 +56,14 @@ def crop_image(image, margin):
     return image[margin:y_size - margin, margin:x_size - margin]
 
 
-def predict_lights(model, data_dir, color, class_id, margin):
+def get_predictions_accuracy(model, images, class_id, margin):
 
-    paths = sorted(glob.glob(os.path.join(data_dir, "*.jpg")))
-
-    images = [cv2.imread(path) for path in paths]
     cropped_images = [crop_image(image, margin) for image in images]
     processed_images = [process_image(image) for image in cropped_images]
 
     predicted_ids = []
 
-    for image in tqdm.tqdm(processed_images):
+    for image in processed_images:
 
         predicted_class_id = model.predict_classes(image, batch_size=1, verbose=0)
         predicted_ids.append(predicted_class_id[0])
@@ -67,7 +72,7 @@ def predict_lights(model, data_dir, color, class_id, margin):
     # cv2.waitKey(0)
 
     accuracy = np.mean(np.array(predicted_ids) == class_id)
-    print("{} accuracy: {}".format(color, accuracy))
+    return accuracy
 
 
 def main():
@@ -81,9 +86,28 @@ def main():
     # data_dir = "/home/student/data_partition/data/bag_dump_loop_with_traffic_light/"
     data_dir = "/home/student/data_partition/data/bag_dump_just_traffic_light/"
 
-    margin = 200
-    predict_lights(model, os.path.join(data_dir, "green"), "green", class_id=2, margin=margin)
-    predict_lights(model, os.path.join(data_dir, "red"), "red", class_id=0, margin=margin)
+    green_images = get_images_as_path(os.path.join(data_dir, "green"))
+    red_images = get_images_as_path(os.path.join(data_dir, "red"))
+
+    green_accuracies = []
+    red_accuracies = []
+
+    margins = list(range(0, 500, 50))
+
+    for margin in tqdm.tqdm(margins):
+
+        green_accuracy = get_predictions_accuracy(model, green_images, class_id=2, margin=margin)
+        green_accuracies.append((margin, green_accuracy))
+
+        red_accuracy = get_predictions_accuracy(model, red_images, class_id=0, margin=margin)
+        red_accuracies.append((margin, red_accuracy))
+
+    green_accuracies = sorted(green_accuracies, key=lambda x: x[1], reverse=True)
+    red_accuracies = sorted(red_accuracies, key=lambda x: x[1], reverse=True)
+
+    print("For data: {}".format(os.path.dirname(data_dir)))
+    print("Sorted green accuracies: {}".format(green_accuracies))
+    print("Sorted red accuracies: {}".format(red_accuracies))
 
 
 if __name__ == "__main__":
