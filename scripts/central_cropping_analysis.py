@@ -15,7 +15,7 @@ import numpy as np
 import utilities
 
 
-def process_image(image):
+def process_single_image(image):
     """
     Process image to format suitable for model input
     :param image: numpy array
@@ -23,11 +23,10 @@ def process_image(image):
     """
 
     desired_shape = (128, 128)
-    image = cv2.resize(image, desired_shape, cv2.INTER_LINEAR)
-    image = image.astype('float32') / 255
-    processed_image = image.reshape(1, *image.shape)
+    resized_image = cv2.resize(image, desired_shape, cv2.INTER_LINEAR)
+    scaled_image = resized_image.astype('float32') / 255
 
-    return processed_image
+    return scaled_image
 
 
 def crop_image_with_relative_margin(image, relative_margin):
@@ -75,14 +74,16 @@ def get_confusion_matrix(model, images_map, red_confidence):
 
     for true_class_id, images in images_map.items():
 
-        processed_images = [process_image(image) for image in images]
+        # Some dataset, e.g. yellow lights, might be empty
+        if len(images) > 0:
 
-        for image in processed_images:
+            processed_images = np.array([process_single_image(image) for image in images])
+            batch_probabilities = model.predict(processed_images)
 
-            probabilities = model.predict(image)[0]
+            for probabilities in batch_probabilities:
 
-            predicted_class_id = get_processed_prediction(probabilities, red_confidence)
-            matrix[true_class_id, predicted_class_id] += 1
+                predicted_class_id = get_processed_prediction(probabilities, red_confidence)
+                matrix[true_class_id, predicted_class_id] += 1
 
     return matrix
 
@@ -108,6 +109,8 @@ def main():
 
     relative_margins = np.arange(0, 0.5, 0.05)
 
+    results = []
+
     for relative_margin in tqdm.tqdm(relative_margins):
 
         cropped_images_map = {}
@@ -118,9 +121,16 @@ def main():
             cropped_images_map[class_id] = cropped_images
 
         matrix = get_confusion_matrix(model, cropped_images_map, red_confidence=0.5)
-        print("Relative margin: {}".format(relative_margin))
+        results.append((relative_margin, matrix))
+
+    sorted_results = sorted(results, key=lambda x: np.sum(np.diagonal(x[1])), reverse=True)
+
+    print("Dataset: {}".format(data_dir))
+    for result in sorted_results:
+
+        print("Relative margin: {}".format(result[0]))
         print("Order: red, yellow, green, others")
-        print(matrix)
+        print(result[1])
 
 
 if __name__ == "__main__":
