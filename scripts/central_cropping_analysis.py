@@ -16,6 +16,11 @@ import utilities
 
 
 def process_image(image):
+    """
+    Process image to format suitable for model input
+    :param image: numpy array
+    :return: numpy array
+    """
 
     desired_shape = (128, 128)
     image = cv2.resize(image, desired_shape, cv2.INTER_LINEAR)
@@ -25,24 +30,10 @@ def process_image(image):
     return processed_image
 
 
-def crop_image(image, margin):
+def crop_image_with_relative_margin(image, relative_margin):
     """
-    Crops margin number of pixels on each side
-    :param image: numpy arrray
-    :param margin: int
-    :return: numpy array
-    """
-
-    y_size = image.shape[0]
-    x_size = image.shape[1]
-
-    return image[margin:y_size - margin, margin:x_size - margin]
-
-
-def crop_image_relative(image, relative_margin):
-    """
-    Crops margin number of pixels on each side by a margin relative to image size in that dimension
-    :param image: numpy arrray
+    Crops margin number of pixels on each side. Margin is computed based on relative size to image size in each direction
+    :param image: numpy arrry
     :param relative_margin: float
     :return: numpy array
     """
@@ -56,41 +47,31 @@ def crop_image_relative(image, relative_margin):
     return image[y_margin:y_size - y_margin, x_margin:x_size - x_margin]
 
 
-def get_predictions_accuracy(model, images, class_id, margin):
+def get_processed_prediction(probabilities, red_confidence):
+    """
+    Given probabilities return predicted class if. Red light is predicted only if its probability is
+    above red_confidence. Else all red predictions are classified as 'others'
+    :param probabilities: numpy array
+    :param red_confidence: threshold for accepting red predictions
+    :return: class id, integer
+    """
 
-    # cropped_images = [crop_image(image, margin) for image in images]
-    cropped_images = [crop_image_relative(image, margin) for image in images]
-    processed_images = [process_image(image) for image in cropped_images]
+    raw_prediction = np.argmax(probabilities)
 
-    predicted_ids = []
+    # If prediction isn't red light, accept it
+    if raw_prediction != 0:
 
-    for image in processed_images:
+        return raw_prediction
 
-        predicted_class_id = model.predict_classes(image, batch_size=1, verbose=0)
-        predicted_ids.append(predicted_class_id[0])
+    else:
 
-    # cv2.imshow("image", cropped_images[0])
-    # cv2.waitKey(0)
-
-    accuracy = np.mean(np.array(predicted_ids) == class_id)
-    return accuracy
-
-
-def get_accuracy_report(accuracies):
-
-    report = []
-
-    for data in accuracies:
-
-        entry = "{:04.2f}: {:05.3f}".format(data[0], data[1])
-        report.append(entry)
-
-    return report
+        # If prediction is for red light, accept it only if it's confident enough, else return 'others'
+        return 0 if probabilities[0] > red_confidence else 3
 
 
-def get_confusion_matrix(model, images_map, classes_ids):
+def get_confusion_matrix(model, images_map, red_confidence):
 
-    matrix = np.zeros(shape=(len(classes_ids), len(classes_ids)))
+    matrix = np.zeros(shape=(len(images_map.keys()), len(images_map.keys())))
 
     for true_class_id, images in images_map.items():
 
@@ -98,7 +79,9 @@ def get_confusion_matrix(model, images_map, classes_ids):
 
         for image in processed_images:
 
-            predicted_class_id = model.predict_classes(image, batch_size=1, verbose=0)[0]
+            probabilities = model.predict(image)[0]
+
+            predicted_class_id = get_processed_prediction(probabilities, red_confidence)
             matrix[true_class_id, predicted_class_id] += 1
 
     return matrix
@@ -122,31 +105,22 @@ def main():
                    utilities.get_images_at_path(os.path.join(data_dir, "unidentified"))
 
     images_map = {0: red_images, 1: yellow_images, 2: green_images, 3: other_images}
-    classes_ids = [0, 1, 2, 3]
 
-    matrix = get_confusion_matrix(model, images_map, classes_ids)
-    print("Order: red, yellow, green, others")
-    print(matrix)
+    relative_margins = np.arange(0, 0.5, 0.05)
 
-    # green_accuracies = []
-    # red_accuracies = []
-    #
-    # relative_margins = np.arange(0, 0.5, 0.05)
-    #
-    # for margin in tqdm.tqdm(relative_margins):
-    #
-    #     green_accuracy = get_predictions_accuracy(model, green_images, class_id=2, margin=margin)
-    #     green_accuracies.append((margin, green_accuracy))
-    #
-    #     red_accuracy = get_predictions_accuracy(model, red_images, class_id=0, margin=margin)
-    #     red_accuracies.append((margin, red_accuracy))
-    #
-    # green_accuracies = sorted(green_accuracies, key=lambda x: x[1], reverse=True)
-    # red_accuracies = sorted(red_accuracies, key=lambda x: x[1], reverse=True)
-    #
-    # print("For data: {}".format(os.path.dirname(data_dir)))
-    # print("Sorted green accuracies: {}".format(get_accuracy_report(green_accuracies)))
-    # print("Sorted red accuracies: {}".format(get_accuracy_report(red_accuracies)))
+    for relative_margin in tqdm.tqdm(relative_margins):
+
+        cropped_images_map = {}
+
+        for class_id, images in images_map.items():
+
+            cropped_images = [crop_image_with_relative_margin(image, relative_margin) for image in images]
+            cropped_images_map[class_id] = cropped_images
+
+        matrix = get_confusion_matrix(model, cropped_images_map, red_confidence=0.5)
+        print("Relative margin: {}".format(relative_margin))
+        print("Order: red, yellow, green, others")
+        print(matrix)
 
 
 if __name__ == "__main__":
