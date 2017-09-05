@@ -96,8 +96,8 @@ def main():
 
     model = utilities.get_model(model_path, weight_path)
 
-    data_dir = "/home/student/data_partition/data/bag_dump_loop_with_traffic_light/"
-    # data_dir = "/home/student/data_partition/data/bag_dump_just_traffic_light/"
+    # data_dir = "/home/student/data_partition/data/bag_dump_loop_with_traffic_light/"
+    data_dir = "/home/student/data_partition/data/bag_dump_just_traffic_light/"
 
     red_images = utilities.get_images_at_path(os.path.join(data_dir, "red"))
     yellow_images = utilities.get_images_at_path(os.path.join(data_dir, "yellow"))
@@ -126,11 +126,14 @@ def main():
     sorted_results = sorted(results, key=lambda x: np.sum(np.diagonal(x[1])), reverse=True)
 
     print("Dataset: {}".format(data_dir))
-    for result in sorted_results:
+    print("Best result:")
 
-        print("Relative margin: {}".format(result[0]))
-        print("Order: red, yellow, green, others")
-        print(result[1])
+    relative_margin = sorted_results[0][0]
+    matrix = sorted_results[0][1]
+
+    print("Relative margin: {}".format(relative_margin))
+    print("Order: red, yellow, green, others")
+    print(matrix)
 
 
 if __name__ == "__main__":
