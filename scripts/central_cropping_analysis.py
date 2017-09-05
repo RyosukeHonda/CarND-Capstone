@@ -85,6 +85,9 @@ def get_confusion_matrix(model, images_map, red_confidence):
                 predicted_class_id = get_processed_prediction(probabilities, red_confidence)
                 matrix[true_class_id, predicted_class_id] += 1
 
+            # Make sums relative to number of samples for the class
+            matrix[true_class_id, :] /= len(images)
+
     return matrix
 
 
