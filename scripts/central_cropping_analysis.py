@@ -12,67 +12,80 @@ import cv2
 import tqdm
 import numpy as np
 
+import utilities
 
 
-def get_images_as_path(path):
-
-    paths = sorted(glob.glob(os.path.join(path, "*.jpg")))
-    return [cv2.imread(path) for path in paths]
-
-
-def get_model(model_path, weight_path):
-
-    with open(model_path, 'r') as f:
-        loaded_model_json = f.read()
-
-    model = keras.models.model_from_json(loaded_model_json)
-    model.load_weights(weight_path)
-    # self.graph = tf.get_default_graph()
-
-    return model
-
-
-def process_image(image):
+def process_single_image(image):
+    """
+    Process image to format suitable for model input
+    :param image: numpy array
+    :return: numpy array
+    """
 
     desired_shape = (128, 128)
-    image = cv2.resize(image, desired_shape, cv2.INTER_LINEAR)
-    image = image.astype('float32') / 255
-    processed_image = image.reshape(1, *image.shape)
+    resized_image = cv2.resize(image, desired_shape, cv2.INTER_LINEAR)
+    scaled_image = resized_image.astype('float32') / 255
 
-    return processed_image
+    return scaled_image
 
 
-def crop_image(image, margin):
+def crop_image_with_relative_margin(image, relative_margin):
     """
-    Crops margin number of pixels on each side
-    :param image: numpy arrray
-    :param margin: int
+    Crops margin number of pixels on each side. Margin is computed based on relative size to image size in each direction
+    :param image: numpy arrry
+    :param relative_margin: float
     :return: numpy array
     """
 
     y_size = image.shape[0]
+    y_margin = int(relative_margin * y_size)
+
     x_size = image.shape[1]
+    x_margin = int(relative_margin * x_size)
 
-    return image[margin:y_size - margin, margin:x_size - margin]
+    return image[y_margin:y_size - y_margin, x_margin:x_size - x_margin]
 
 
-def get_predictions_accuracy(model, images, class_id, margin):
+def get_processed_prediction(probabilities, red_confidence):
+    """
+    Given probabilities return predicted class if. Red light is predicted only if its probability is
+    above red_confidence. Else all red predictions are classified as 'others'
+    :param probabilities: numpy array
+    :param red_confidence: threshold for accepting red predictions
+    :return: class id, integer
+    """
 
-    cropped_images = [crop_image(image, margin) for image in images]
-    processed_images = [process_image(image) for image in cropped_images]
+    raw_prediction = np.argmax(probabilities)
 
-    predicted_ids = []
+    # If prediction isn't red light, accept it
+    if raw_prediction != 0:
 
-    for image in processed_images:
+        return raw_prediction
 
-        predicted_class_id = model.predict_classes(image, batch_size=1, verbose=0)
-        predicted_ids.append(predicted_class_id[0])
+    else:
 
-    # cv2.imshow("image", cropped_images[0])
-    # cv2.waitKey(0)
+        # If prediction is for red light, accept it only if it's confident enough, else return 'others'
+        return 0 if probabilities[0] > red_confidence else 3
 
-    accuracy = np.mean(np.array(predicted_ids) == class_id)
-    return accuracy
+
+def get_confusion_matrix(model, images_map, red_confidence):
+
+    matrix = np.zeros(shape=(len(images_map.keys()), len(images_map.keys())))
+
+    for true_class_id, images in images_map.items():
+
+        # Some dataset, e.g. yellow lights, might be empty
+        if len(images) > 0:
+
+            processed_images = np.array([process_single_image(image) for image in images])
+            batch_probabilities = model.predict(processed_images)
+
+            for probabilities in batch_probabilities:
+
+                predicted_class_id = get_processed_prediction(probabilities, red_confidence)
+                matrix[true_class_id, predicted_class_id] += 1
+
+    return matrix
 
 
 def main():
@@ -81,33 +94,46 @@ def main():
     model_path = os.path.join(model_dir, "model128.json")
     weight_path = os.path.join(model_dir, "weights128.hdf5")
 
-    model = get_model(model_path, weight_path)
+    model = utilities.get_model(model_path, weight_path)
 
     # data_dir = "/home/student/data_partition/data/bag_dump_loop_with_traffic_light/"
     data_dir = "/home/student/data_partition/data/bag_dump_just_traffic_light/"
 
-    green_images = get_images_as_path(os.path.join(data_dir, "green"))
-    red_images = get_images_as_path(os.path.join(data_dir, "red"))
+    red_images = utilities.get_images_at_path(os.path.join(data_dir, "red"))
+    yellow_images = utilities.get_images_at_path(os.path.join(data_dir, "yellow"))
+    green_images = utilities.get_images_at_path(os.path.join(data_dir, "green"))
+    other_images = utilities.get_images_at_path(os.path.join(data_dir, "nolight")) + \
+                   utilities.get_images_at_path(os.path.join(data_dir, "unidentified"))
 
-    green_accuracies = []
-    red_accuracies = []
+    images_map = {0: red_images, 1: yellow_images, 2: green_images, 3: other_images}
 
-    margins = list(range(0, 500, 50))
+    relative_margins = np.arange(0, 0.5, 0.05)
 
-    for margin in tqdm.tqdm(margins):
+    results = []
 
-        green_accuracy = get_predictions_accuracy(model, green_images, class_id=2, margin=margin)
-        green_accuracies.append((margin, green_accuracy))
+    for relative_margin in tqdm.tqdm(relative_margins):
 
-        red_accuracy = get_predictions_accuracy(model, red_images, class_id=0, margin=margin)
-        red_accuracies.append((margin, red_accuracy))
+        cropped_images_map = {}
 
-    green_accuracies = sorted(green_accuracies, key=lambda x: x[1], reverse=True)
-    red_accuracies = sorted(red_accuracies, key=lambda x: x[1], reverse=True)
+        for class_id, images in images_map.items():
 
-    print("For data: {}".format(os.path.dirname(data_dir)))
-    print("Sorted green accuracies: {}".format(green_accuracies))
-    print("Sorted red accuracies: {}".format(red_accuracies))
+            cropped_images = [crop_image_with_relative_margin(image, relative_margin) for image in images]
+            cropped_images_map[class_id] = cropped_images
+
+        matrix = get_confusion_matrix(model, cropped_images_map, red_confidence=0.5)
+        results.append((relative_margin, matrix))
+
+    sorted_results = sorted(results, key=lambda x: np.sum(np.diagonal(x[1])), reverse=True)
+
+    print("Dataset: {}".format(data_dir))
+    print("Best result:")
+
+    relative_margin = sorted_results[0][0]
+    matrix = sorted_results[0][1]
+
+    print("Relative margin: {}".format(relative_margin))
+    print("Order: red, yellow, green, others")
+    print(matrix)
 
 
 if __name__ == "__main__":
