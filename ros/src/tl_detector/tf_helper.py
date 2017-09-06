@@ -4,7 +4,8 @@ Utilities for traffic light module
 
 import numpy as np
 from styx_msgs.msg import TrafficLightArray, TrafficLight
-from traffic_light_config import config
+import rospy
+import yaml
 
 def get_given_traffic_lights():
     """
@@ -14,7 +15,9 @@ def get_given_traffic_lights():
     traffic_lights = TrafficLightArray()
 	
     traffic_light_list = []
-    traffic_light_positions = config.light_positions
+
+    config_string = rospy.get_param("/traffic_light_config")
+    traffic_light_positions = yaml.load(config_string)["light_positions"]
 	
     for traffic_light_index, traffic_light_position in enumerate(traffic_light_positions):
 
