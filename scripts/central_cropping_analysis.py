@@ -74,7 +74,7 @@ def get_confusion_matrix(model, images_map, red_confidence):
 
     for true_class_id, images in images_map.items():
 
-        # Some dataset, e.g. yellow lights, might be empty
+        # Some datasets, e.g. yellow lights, might be empty
         if len(images) > 0:
 
             processed_images = np.array([process_single_image(image) for image in images])
