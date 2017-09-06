@@ -10,9 +10,10 @@ from light_classification.tl_classifier import TLClassifierCV, TLClassifier
 import tf
 import tf.transformations
 import cv2
-from traffic_light_config import config
 import tf_helper
 import numpy as np
+import yaml
+
 
 STATE_COUNT_THRESHOLD = 3
 
@@ -39,10 +40,15 @@ class TLDetector(object):
         testing your solution in real life so don't rely on it in the final submission.
         '''
         rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb, queue_size=1)
-        rospy.Subscriber('/camera/image_raw', Image, self.image_cb, queue_size=1)
+        rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
 
         self.upcoming_stop_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
         self.image_pub = rospy.Publisher('/camera/my_image', Image, queue_size=1)
+
+        config_string = rospy.get_param("/traffic_light_config")
+        self.config = yaml.load(config_string)
+
+        self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
 
         self.bridge = CvBridge()
         self.light_classifier = TLClassifier()
@@ -84,18 +90,24 @@ class TLDetector(object):
             traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
                 self.traffic_positions.lights, self.car_pose.position, waypoints_matrix)
 
-            x, y = self.project_to_image_plane(traffic_light.pose.pose.position, self.car_pose)
-            
-            image_width = config.camera_info.image_width
-            image_height = config.camera_info.image_height
+            # These values seem so be wrong - Udacity keeps on putting in config different values that what camera
+            # actually publishes.
+            # image_width = self.config["camera_info"]["image_width"]
+            # image_height = self.config["camera_info"]["image_height"]
+
+            # Therefore simply check image size
+            self.camera_image = self.image
+            self.camera_image.encoding = "rgb8"
+            cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+
+            image_height = cv_image.shape[0]
+            image_width = cv_image.shape[1]
+
+            x, y = self.project_to_image_plane(
+                traffic_light.pose.pose.position, self.car_pose, image_width, image_height)
 
             # Only try to classify image if traffic light is within it
             if 0 < x < image_width and 0 < y < image_height:
-
-                self.camera_image = self.image
-                self.camera_image.encoding = "rgb8"
-
-                cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
 
                 traffic_light_state = self.light_classifier.get_classification(cv_image)
 
@@ -115,11 +127,14 @@ class TLDetector(object):
     def image_cb(self, msg):
         self.image = msg
 
-    def project_to_image_plane(self, point_in_world, car_pose):
+    def project_to_image_plane(self, point_in_world, car_pose, image_width, image_height):
         """Project point from 3D world coordinates to 2D camera image location
 
         Args:
             point_in_world (Point): 3D location of a point in the world
+            car_pose: current car pose
+            image_width: camera image width
+            image_height: camera image height
 
         Returns:
             x (int): x coordinate of target point in image
@@ -127,11 +142,13 @@ class TLDetector(object):
 
         """
 
-        fx = config.camera_info.focal_length_x
-        fy = config.camera_info.focal_length_y
+        fx = self.config["camera_info"]["focal_length_x"]
+        fy = self.config["camera_info"]["focal_length_y"]
 
-        image_width = config.camera_info.image_width
-        image_height = config.camera_info.image_height
+        # light = None
+        # light_positions = self.config['light_positions']
+        # if(self.pose):
+        #     car_position = self.get_closest_waypoint(self.pose.pose)
 
         # Commenting out trans and rot code - we aren't using them for now, as they seem broken and
         # are received using blocking code - thus somewhat slow
