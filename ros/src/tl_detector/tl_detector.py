@@ -39,6 +39,7 @@ class TLDetector(object):
         help you work on another single component of the node. This topic won't be available when
         testing your solution in real life so don't rely on it in the final submission.
         '''
+
         rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb, queue_size=1)
         rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
 
