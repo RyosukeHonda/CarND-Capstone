@@ -29,6 +29,17 @@ class TLDetector(object):
         self.lights = []
         self.traffic_positions = tf_helper.get_given_traffic_lights()
 
+        self.last_traffic_light_state = TrafficLight.UNKNOWN
+        self.last_state = TrafficLight.UNKNOWN
+        self.last_wp = -1
+        self.state_count = 0
+
+        self.last_reported_traffic_light_id = None
+        self.last_reported_traffic_light_time = None
+
+        self.traffic_lights = None
+        self.image = None
+
         rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
         rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
 
@@ -56,20 +67,10 @@ class TLDetector(object):
         # self.light_classifier = TLClassifierCV()
         self.listener = tf.TransformListener()
 
-        self.last_traffic_light_state = TrafficLight.UNKNOWN
-        self.last_state = TrafficLight.UNKNOWN
-        self.last_wp = -1
-        self.state_count = 0
-
-        self.last_reported_traffic_light_id = None
-        self.last_reported_traffic_light_time = None
-
-        self.traffic_lights = None
-        self.image = None
-
         rospy.spin()
 
     def pose_cb(self, msg):
+
         self.car_pose = msg.pose
 
         # For debugging(Ground Truth data)
@@ -107,8 +108,12 @@ class TLDetector(object):
             x, y = self.project_to_image_plane(
                 traffic_light.pose.pose.position, self.car_pose, image_width, image_height)
 
+            # rospy.logwarn("Position in image: {}x{}".format(x, y))
+
             # Only try to classify image if traffic light is within it
             if 0 < x < image_width and 0 < y < image_height:
+
+                # rospy.logwarn("Traffic light in image")
 
                 traffic_light_state = self.light_classifier.get_classification(cv_image)
 
@@ -162,8 +167,9 @@ class TLDetector(object):
         #     (trans, rot) = self.listener.lookupTransform("/base_link",
         #                                                  "/world", now)
         #
-        # except (tf.Exception, tf.LookupException, tf.ConnectivityException):
+        # except (tf.Exception, tf.LookupException, tf.ConnectivityException) as e:
         #     rospy.logerr("Failed to find camera to map transform")
+
         #
         # # rospy.logwarn("Transform shift is: {}".format(trans))
         # # rospy.logwarn("Rotation is: {}".format(rot))
@@ -173,8 +179,7 @@ class TLDetector(object):
             [point_in_world.x, point_in_world.y, point_in_world.z], dtype=np.float32).reshape(3, 1)
 
         car_position = np.array([car_pose.position.x, car_pose.position.y, car_pose.position.z],
-                                dtype=np.float32).reshape(
-            3, 1)
+                                dtype=np.float32).reshape(3, 1)
         camera_offset = np.array([1.0, 0, 1.2], dtype=np.float32).reshape(3, 1)
         # translation_vector = np.array(trans, dtype=np.float32).reshape(3, 1)
         translation_vector = car_position + camera_offset
