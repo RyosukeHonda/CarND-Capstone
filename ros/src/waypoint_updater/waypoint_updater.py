@@ -30,8 +30,8 @@ TODO (for Yousuf and Aaron): Stopline location for each traffic light.
 LOOKAHEAD_WPS = 50  # Number of waypoints we will publish. You can change this number
 LOOKBEHIND_WPS = 50
 
-LOOK_BEHIND_METRES = 10
-LOOK_AHEAD_METRES = 50
+LOOK_BEHIND_METRES = 5
+LOOK_AHEAD_METRES = 30
 
 
 miles_per_hour_to_metres_per_second = 0.44704

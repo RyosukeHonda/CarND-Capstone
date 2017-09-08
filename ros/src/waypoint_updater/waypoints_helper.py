@@ -203,13 +203,16 @@ def set_braking_behaviour(waypoints_ahead, braking_path_waypoints, current_posit
     # Establish where the car is in previously defined braking path
     car_waypoint_index_in_braking_path = get_closest_waypoint_index(current_position, braking_path_waypoints_matrix)
 
+    braking_waypoints_count = min(len(waypoints_ahead), len(braking_path_waypoints[car_waypoint_index_in_braking_path:]))
+    last_braking_path_index = car_waypoint_index_in_braking_path + braking_waypoints_count
+
     # Set braking velocities accordingly
-    for index, braking_path_waypoint in enumerate(braking_path_waypoints[car_waypoint_index_in_braking_path:]):
+    for index, braking_path_waypoint in enumerate(
+            braking_path_waypoints[car_waypoint_index_in_braking_path:last_braking_path_index]):
 
         waypoints_ahead[index].twist.twist.linear.x = braking_path_waypoint.twist.twist.linear.x
 
-    # And for all further velocities just set them to negative
-    for waypoint in waypoints_ahead[len(braking_path_waypoints):]:
+    for waypoint in waypoints_ahead[braking_waypoints_count:]:
         waypoint.twist.twist.linear.x = -1
 
 
@@ -267,7 +270,7 @@ def get_waypoints_ahead_of_car(waypoints, car_waypoint_index, distance):
 
     while get_road_distance(waypoints_ahead[:index]) < distance:
 
-        index += 10
+        index += 5
 
     return waypoints_ahead[:index]
 
@@ -282,6 +285,6 @@ def get_waypoints_behind_car(waypoints, car_waypoint_index, distance):
 
     while get_road_distance(waypoints_behind[index:shifted_car_index]) < distance:
 
-        index -= 10
+        index -= 5
 
     return waypoints_behind[index:shifted_car_index]
