@@ -48,12 +48,27 @@ class TLClassifierCV(object):
 
 class TLClassifier(object):
 
-    def __init__(self):
-        with open('light_classification/saved_models/model_sim.json', 'r') as f:
+    def __init__(self, experiment_environment):
+
+        if experiment_environment == "simulator":
+
+            model_path = 'light_classification/saved_models/model_sim.json'
+            weights_path = 'light_classification/saved_models/weights_sim.hdf5'
+
+        elif experiment_environment == "site":
+
+            model_path = 'light_classification/saved_models/model_site.json'
+            weights_path = 'light_classification/saved_models/weights_site.hdf5'
+
+        else:
+
+            raise ValueError("Launch is neither styx.launch nor site.launch!!!")
+
+        with open(model_path, 'r') as f:
             loaded_model_json = f.read()
 
         self.model = model_from_json(loaded_model_json)
-        self.model.load_weights('light_classification/saved_models/weights_sim.hdf5')
+        self.model.load_weights(weights_path)
         self.graph = tf.get_default_graph()
 
     def get_classification(self, image):
