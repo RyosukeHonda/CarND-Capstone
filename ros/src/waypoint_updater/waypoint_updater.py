@@ -89,9 +89,6 @@ class WaypointUpdater(object):
 
                 base_waypoints = self.last_base_waypoints_lane.waypoints
 
-                # smoothed_waypoints_ahead = waypoints_helper.get_smooth_waypoints_ahead(
-                #     base_waypoints, self.pose.position, LOOKAHEAD_WPS, LOOKBEHIND_WPS)
-
                 smoothed_waypoints_ahead = waypoints_helper.get_dynamic_smooth_waypoints_ahead(
                     base_waypoints, self.pose.position, LOOK_AHEAD_METRES, LOOKBEHIND_WPS)
 
