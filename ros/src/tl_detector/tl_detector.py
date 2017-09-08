@@ -64,8 +64,8 @@ class TLDetector(object):
 
         self.bridge = CvBridge()
 
-        experiment_environment = rospy.get_param('/experiment_environment')
-        self.light_classifier = TLClassifier(experiment_environment)
+        self.experiment_environment = rospy.get_param('/experiment_environment')
+        self.light_classifier = TLClassifier(self.experiment_environment)
 
         # self.light_classifier = TLClassifierCV()
         self.listener = tf.TransformListener()
@@ -111,10 +111,16 @@ class TLDetector(object):
             x, y = self.project_to_image_plane(
                 traffic_light.pose.pose.position, self.car_pose, image_width, image_height)
 
-            # rospy.logwarn("Position in image: {}x{}".format(x, y))
+            simulator_traffic_light_in_view = 0 < x < image_width and 0 < y < image_height
+            # As of this writing, site camera mapping is broken (thanks, Udacity...), so we will just process all
+            # images on site
+            site_traffic_light_in_view = True
+
+            traffic_light_in_view = simulator_traffic_light_in_view if self.experiment_environment == "simulator" \
+                else site_traffic_light_in_view
 
             # Only try to classify image if traffic light is within it
-            if 0 < x < image_width and 0 < y < image_height:
+            if traffic_light_in_view:
 
                 # rospy.logwarn("Traffic light in image")
 
