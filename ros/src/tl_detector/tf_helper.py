@@ -7,20 +7,20 @@ from styx_msgs.msg import TrafficLightArray, TrafficLight
 import rospy
 import yaml
 
+
 def get_given_traffic_lights():
     """
     Return given traffic light positions
     :return: TrafficLightArray
     """
     traffic_lights = TrafficLightArray()
-	
+
     traffic_light_list = []
 
     config_string = rospy.get_param("/traffic_light_config")
     traffic_light_positions = yaml.load(config_string)["light_positions"]
-	
-    for traffic_light_index, traffic_light_position in enumerate(traffic_light_positions):
 
+    for traffic_light_index, traffic_light_position in enumerate(traffic_light_positions):
         traffic_light = TrafficLight()
 
         traffic_light.pose.pose.position.x = traffic_light_position[0]
@@ -45,7 +45,7 @@ def get_distance_between_points(first, second):
     x_difference = first.x - second.x
     y_difference = first.y - second.y
 
-    return np.sqrt(x_difference**2 + y_difference**2)
+    return np.sqrt(x_difference ** 2 + y_difference ** 2)
 
 
 def get_waypoints_matrix(waypoints):
@@ -75,7 +75,7 @@ def get_closest_waypoint_index(position, waypoints_matrix):
     x_distances = waypoints_matrix[:, 0] - position.x
     y_distances = waypoints_matrix[:, 1] - position.y
 
-    squared_distances = x_distances**2 + y_distances**2
+    squared_distances = x_distances ** 2 + y_distances ** 2
     return np.argmin(squared_distances)
 
 
@@ -88,7 +88,7 @@ def get_info_about_closest_traffic_light_ahead_of_car(traffic_lights, car_positi
     :param waypoints_matrix: numpy matrix with waypoints coordinates
     :return: styx_msgs.msg.TrafficLight instance
     """
-    
+
     car_waypoint_index = get_closest_waypoint_index(car_position, waypoints_matrix)
 
     lights_waypoints_indices = []
@@ -106,11 +106,10 @@ def get_info_about_closest_traffic_light_ahead_of_car(traffic_lights, car_positi
 
         light_index = 0
         light_waypoint_index = get_closest_waypoint_index(traffic_lights[0].pose.pose.position, waypoints_matrix)
-        
+
     else:
 
         light_index = sorted_traffic_lights_waypoint_indices[0][0]
         light_waypoint_index = sorted_traffic_lights_waypoint_indices[0][1]
 
     return traffic_lights[light_index], light_waypoint_index
-
