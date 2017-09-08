@@ -64,7 +64,7 @@ class TLDetector(object):
 
         self.bridge = CvBridge()
 
-        self.experiment_environment = rospy.get_param('/experiment_environment')
+        self.experiment_environment = rospy.get_param('/experiment_environment', "site")
         self.light_classifier = TLClassifier(self.experiment_environment)
 
         # self.light_classifier = TLClassifierCV()
