@@ -17,6 +17,7 @@ def get_given_traffic_lights():
 
     traffic_light_list = []
 
+    tl_height = rospy.get_param("/tl_height")
     config_string = rospy.get_param("/traffic_light_config")
     traffic_light_positions = yaml.load(config_string)["light_positions"]
 
@@ -25,7 +26,7 @@ def get_given_traffic_lights():
 
         traffic_light.pose.pose.position.x = traffic_light_position[0]
         traffic_light.pose.pose.position.y = traffic_light_position[1]
-        traffic_light.pose.pose.position.z = 5.837643
+        traffic_light.pose.pose.position.z = tl_height
         traffic_light.state = TrafficLight.UNKNOWN
         traffic_light_list.append(traffic_light)
 

@@ -26,4 +26,7 @@
 
     <!--Experiment environment parameter -->
     <param name="experiment_environment" value="site" />
+
+    <!--Traffic Light height parameter-->
+    <param name="tl_height" value="1.524" />
 </launch>
