@@ -49,11 +49,11 @@ class TLClassifierCV(object):
 class TLClassifier(object):
 
     def __init__(self):
-        with open('light_classification/saved_models/model128.json', 'r') as f:
+        with open('light_classification/saved_models/model_sim.json', 'r') as f:
             loaded_model_json = f.read()
 
         self.model = model_from_json(loaded_model_json)
-        self.model.load_weights('light_classification/saved_models/weights128.hdf5')
+        self.model.load_weights('light_classification/saved_models/weights_sim.hdf5')
         self.graph = tf.get_default_graph()
 
     def get_classification(self, image):
