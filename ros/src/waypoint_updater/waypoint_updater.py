@@ -31,7 +31,7 @@ LOOKAHEAD_WPS = 50  # Number of waypoints we will publish. You can change this n
 LOOKBEHIND_WPS = 50
 
 LOOK_BEHIND_METRES = 5
-LOOK_AHEAD_METRES = 30
+LOOK_AHEAD_METRES = 20
 
 
 miles_per_hour_to_metres_per_second = 0.44704
@@ -122,6 +122,8 @@ class WaypointUpdater(object):
 
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * np.power(self.current_linear_velocity, 1.2):
+
+                            rospy.logwarn("Need to brake, man!")
 
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
