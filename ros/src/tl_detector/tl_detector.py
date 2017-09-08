@@ -40,9 +40,6 @@ class TLDetector(object):
         self.traffic_lights = None
         self.image = None
 
-        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
-        rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
-
         '''
         /vehicle/traffic_lights helps you acquire an accurate ground truth data source for the traffic light
         classifier, providing the location and current color state of all traffic lights in the
@@ -50,12 +47,6 @@ class TLDetector(object):
         help you work on another single component of the node. This topic won't be available when
         testing your solution in real life so don't rely on it in the final submission.
         '''
-
-        rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb, queue_size=1)
-        rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
-
-        self.upcoming_stop_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
-        self.image_pub = rospy.Publisher('/camera/my_image', Image, queue_size=1)
 
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
@@ -66,9 +57,18 @@ class TLDetector(object):
 
         self.experiment_environment = rospy.get_param('/experiment_environment')
         self.light_classifier = TLClassifier(self.experiment_environment)
-
         # self.light_classifier = TLClassifierCV()
+
         self.listener = tf.TransformListener()
+
+        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
+        rospy.Subscriber('/base_waypoints', Lane, self.waypoints_cb, queue_size=1)
+
+        rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb, queue_size=1)
+        rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
+
+        self.upcoming_stop_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
+        self.image_pub = rospy.Publisher('/camera/my_image', Image, queue_size=1)
 
         rospy.spin()
 
