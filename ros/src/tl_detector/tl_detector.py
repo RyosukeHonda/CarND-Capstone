@@ -122,9 +122,10 @@ class TLDetector(object):
             # Only try to classify image if traffic light is within it
             if traffic_light_in_view:
 
-                # rospy.logwarn("Traffic light in image")
-
                 traffic_light_state = self.light_classifier.get_classification(cv_image)
+
+                # lights_map = {0: "Red", 1: "Yellow", 2: "Green"}
+                # rospy.logwarn("Detected light: {}".format(lights_map.get(traffic_light_state, "Other")))
 
                 cv2.circle(cv_image, (x, y), radius=50, color=(255, 0, 0), thickness=12)
                 marked_image = self.bridge.cv2_to_imgmsg(cv_image, encoding="bgr8")
