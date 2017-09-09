@@ -283,6 +283,7 @@ def get_waypoints_behind_car(waypoints, car_waypoint_index, distance):
 
     index = shifted_car_index - int(distance)
 
+
     while get_road_distance(waypoints_behind[index:shifted_car_index]) < distance:
 
         index -= 5

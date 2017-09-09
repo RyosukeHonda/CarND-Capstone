@@ -81,6 +81,8 @@ class WaypointUpdater(object):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
 
+            # self.current_linear_velocity = 9.0 * miles_per_hour_to_metres_per_second
+
             arguments = [self.last_base_waypoints_lane, self.current_linear_velocity, self.pose]
             are_arguments_available = all([x is not None for x in arguments])
 
@@ -90,7 +92,7 @@ class WaypointUpdater(object):
                 base_waypoints = self.last_base_waypoints_lane.waypoints
 
                 smoothed_waypoints_ahead = waypoints_helper.get_dynamic_smooth_waypoints_ahead(
-                    base_waypoints, self.pose.position, LOOK_AHEAD_METRES, LOOKBEHIND_WPS)
+                    base_waypoints, self.pose.position, LOOK_AHEAD_METRES, LOOK_BEHIND_METRES)
 
                 for waypoint in smoothed_waypoints_ahead:
                     waypoint.twist.twist.linear.x = 9.0 * miles_per_hour_to_metres_per_second
