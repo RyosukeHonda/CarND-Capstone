@@ -123,8 +123,6 @@ class WaypointUpdater(object):
                         # If we are close enough to traffic light that need to start braking
                         if distance_to_traffic_light < 5.0 * np.power(self.current_linear_velocity, 1.2):
 
-                            rospy.logwarn("Need to brake, man!")
-
                             # Get braking path
                             self.braking_path_waypoints = waypoints_helper.get_braking_path_waypoints(
                                 smoothed_waypoints_ahead, self.current_linear_velocity, light_id_in_smooth_waypoints)
