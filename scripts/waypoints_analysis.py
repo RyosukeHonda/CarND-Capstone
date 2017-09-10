@@ -4,6 +4,7 @@ Very simple script for waypoints analysis
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def get_statistics(data):
     distances = []
 
@@ -21,12 +22,18 @@ def get_statistics(data):
 
 def main():
 
-    path = "/tmp/waypoints/final_waypoints_6671.txt"
+    path = "/home/student/Downloads/base_waypoints.txt"
     data = np.loadtxt(path)
 
-    plt.scatter(data[:, 0], data[:, 1], c="b")
-    plt.show()
+    # plt.scatter(data[:, 0], data[:, 1], c="b")
 
+    fig, ax = plt.subplots()
+    ax.scatter(data[:, 0], data[:, 1])
+
+    for index in range(len(data)):
+        ax.annotate(str(index), (data[index][0], data[index][1]))
+
+    plt.show()
     print(get_statistics(data))
 
 
