@@ -42,8 +42,9 @@ class WaypointUpdater(object):
         rospy.init_node('waypoint_updater')
 
         # TODO: Add other member variables you need below
-        self.last_base_waypoints_lane = \
-            None
+        self.last_base_waypoints_lane = None
+        self.last_base_waypoints_matrix = None
+
         self.upcoming_traffic_light_position = None
         self.upcoming_traffic_light_message_time = None
         self.current_linear_velocity = None
@@ -148,9 +149,8 @@ class WaypointUpdater(object):
 
                 self.final_waypoints_pub.publish(lane)
 
-                base_waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
                 car_waypoint_index = waypoints_helper.get_closest_waypoint_index(
-                    self.pose.position, base_waypoints_matrix)
+                    self.pose.position, self.last_base_waypoints_matrix)
 
                 self.print_car_waypoint(car_waypoint_index)
 
@@ -163,6 +163,7 @@ class WaypointUpdater(object):
     def base_waypoints_cb(self, lane):
         # TODO: Implement
         self.last_base_waypoints_lane = lane
+        self.last_base_waypoints_matrix = waypoints_helper.get_waypoints_matrix(lane.waypoints)
 
         # if not os.path.exists(path):
         #     waypoints_helper.save_waypoints(lane.waypoints, path)
