@@ -35,20 +35,6 @@ def get_given_traffic_lights():
     return traffic_lights
 
 
-def get_distance_between_points(first, second):
-    """
-    Return distance between two points
-    :param first: geometry_msgs.msgs.Point instance
-    :param second: geometry_msgs.msgs.Point instance
-    :return: float
-    """
-
-    x_difference = first.x - second.x
-    y_difference = first.y - second.y
-
-    return np.sqrt(x_difference ** 2 + y_difference ** 2)
-
-
 def get_waypoints_matrix(waypoints):
     """
     Converts waypoints listt to numpy matrix
@@ -80,35 +66,54 @@ def get_closest_waypoint_index(position, waypoints_matrix):
     return np.argmin(squared_distances)
 
 
-def get_info_about_closest_traffic_light_ahead_of_car(traffic_lights, car_position, waypoints_matrix):
+def get_road_distance(waypoints):
+    """
+    Get road distance covered when following waypoints
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :return: float
+    """
+
+    total_distance = 0.0
+
+    for index in range(1, len(waypoints)):
+
+        x_distance = waypoints[index].pose.pose.position.x - waypoints[index - 1].pose.pose.position.x
+        y_distance = waypoints[index].pose.pose.position.y - waypoints[index - 1].pose.pose.position.y
+
+        distance = np.sqrt((x_distance**2) + (y_distance**2))
+
+        total_distance += distance
+
+    return total_distance
+
+
+def get_closest_traffic_light_ahead_of_car(traffic_lights, car_position, waypoints):
     """
     Given list of traffic lights, car position and waypoints, return closest traffic light
-    ahead of the car and index of closest waypoint
+    ahead of the car. This function wraps around the track, so that if car is at the end of the track,
+    and closest traffic light is at track's beginning, it will be correctly reported
     :param traffic_lights: list of styx_msgs.msg.TrafficLight instances
     :param car_position: geometry_msgs.msgs.Pose instance
-    :param waypoints_matrix: numpy matrix with waypoints coordinates
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
     :return: styx_msgs.msg.TrafficLight instance
     """
 
-    car_waypoint_index = get_closest_waypoint_index(car_position, waypoints_matrix)
+    waypoints_matrix = get_waypoints_matrix(waypoints)
+    car_index = get_closest_waypoint_index(car_position, waypoints_matrix)
 
-    lights_waypoints_indices = []
+    # Arrange track waypoints so they start at car position
+    waypoints_ahead = waypoints[car_index:] + waypoints[:car_index]
+    waypoints_ahead_matrix = get_waypoints_matrix(waypoints_ahead)
 
-    for traffic_light_index, traffic_light in enumerate(traffic_lights):
+    distances = []
 
-        waypoint_index = get_closest_waypoint_index(traffic_light.pose.pose.position, waypoints_matrix)
+    for traffic_light in traffic_lights:
 
-        if waypoint_index > car_waypoint_index:
-            lights_waypoints_indices.append((traffic_light_index, waypoint_index))
+        waypoint_index = get_closest_waypoint_index(traffic_light.pose.pose.position, waypoints_ahead_matrix)
 
-    sorted_traffic_lights_waypoint_indices = sorted(lights_waypoints_indices, key=lambda x: x[1])
+        distance = get_road_distance(waypoints_ahead[:waypoint_index])
+        distances.append(distance)
 
-    if len(lights_waypoints_indices) == 0:
+    closest_traffic_light_index = np.argmin(distances)
 
-        light_index = 0
-
-    else:
-
-        light_index = sorted_traffic_lights_waypoint_indices[0][0]
-
-    return traffic_lights[light_index]
+    return traffic_lights[closest_traffic_light_index]

@@ -23,20 +23,6 @@ def get_waypoints_matrix(waypoints):
     return waypoints_matrix
 
 
-def get_distance_between_points(first, second):
-    """
-    Return distance between two points
-    :param first: geometry_msgs.msgs.Point instance
-    :param second: geometry_msgs.msgs.Point instance
-    :return: float
-    """
-
-    x_difference = first.x - second.x
-    y_difference = first.y - second.y
-
-    return np.sqrt(x_difference**2 + y_difference**2)
-
-
 def get_closest_waypoint_index(position, waypoints_matrix):
     """
     Given a pose and waypoints list, return index of waypoint closest to pose
