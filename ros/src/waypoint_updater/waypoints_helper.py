@@ -237,11 +237,32 @@ def get_smooth_waypoints_ahead(base_waypoints, car_position, look_ahead_waypoint
     return smoothed_waypoints[look_behind_waypoints_count:]
 
 
+def get_dynamic_smooth_waypoints(waypoints, car_position, look_ahead_metres, look_behind_metres):
+    """
+    Given base waypoints, car position and look ahead and behind metres, compute a smooth path around of the car.
+    Path should stretch approximately look_behind_metres behind the carn and look_ahead_metres ahead of the car
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param car_position: car position in base_waypoints
+    :param look_ahead_metres: float, roughly how many metres ahead of the car we should return
+    :param look_behind_metres: float, roughly how many metres behind the car we should consider to smooth the path
+    :return: list of styx_msgs.msg.Waypoint instances
+    """
+
+    waypoints_matrix = get_waypoints_matrix(waypoints)
+    car_waypoint_index = get_closest_waypoint_index(car_position, waypoints_matrix)
+
+    waypoints_behind = get_waypoints_behind_car(waypoints, car_waypoint_index, look_behind_metres)
+    waypoints_ahead = get_waypoints_ahead_of_car(waypoints, car_waypoint_index, look_ahead_metres)
+
+    nearby_waypoints = waypoints_behind + waypoints_ahead
+    smoothed_waypoints = get_smoothed_out_waypoints(nearby_waypoints)
+
+    return smoothed_waypoints
+
+
 def get_dynamic_smooth_waypoints_ahead(waypoints, car_position, look_ahead_metres, look_behind_metres):
     """
     Given base waypoints, car position and look ahead and behind metres, compute a smooth path ahead of the car.
-    Except for corner cases near track end, waypoints ahead should stretch at least look_ahead_metres
-    in front of the car
     :param waypoints: list of styx_msgs.msg.Waypoint instances
     :param car_position: car position in base_waypoints
     :param look_ahead_metres: float, roughly how many metres ahead of the car we should return
@@ -283,9 +304,27 @@ def get_waypoints_behind_car(waypoints, car_waypoint_index, distance):
 
     index = shifted_car_index - int(distance)
 
-
     while get_road_distance(waypoints_behind[index:shifted_car_index]) < distance:
 
         index -= 5
 
     return waypoints_behind[index:shifted_car_index]
+
+
+def is_traffic_light_ahead_of_car(waypoints, car_position, light_position):
+    """
+    Given waypoints segment, car position, light position and max distance, check if light is ahead of car.
+    If light is ahead but appears to be outside of considered waypoints, then False is returned
+    :param waypoints: list of styx_msgs.msg.Waypoint instances
+    :param car_position: geometry_msgs.msgs.Point instance, current car position
+    :param light_position: geometry_msgs.msgs.Point instance, traffic light position
+    :return: bool
+    """
+
+    waypoints_matrix = get_waypoints_matrix(waypoints)
+
+    car_index = get_closest_waypoint_index(car_position, waypoints_matrix)
+    light_index = get_closest_waypoint_index(light_position, waypoints_matrix)
+
+    # If light is ahead of car but not outside of waypoints, return True, else False
+    return car_index < light_index and light_index != len(waypoints) - 1

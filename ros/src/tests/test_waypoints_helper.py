@@ -147,3 +147,131 @@ def test_get_road_distance_not_symmetrical_left_and_right_turns():
     actual = waypoints_helper.get_road_distance(waypoints)
 
     assert np.isclose(expected, actual)
+
+
+def test_is_traffic_light_ahead_of_car_light_is_ahead_of_car():
+
+    waypoints = []
+
+    for x in range(0, 10):
+
+        waypoint = styx_msgs.msg.Waypoint()
+        waypoint.pose.pose.position.x = x
+        waypoint.pose.pose.position.y = 0
+        waypoint.pose.pose.position.z = 0
+
+        waypoints.append(waypoint)
+
+    car_position = geometry_msgs.msg.Point()
+    car_position.x = 2
+    car_position.y = 0
+    car_position.z = 0
+
+    light_position = geometry_msgs.msg.Point()
+    light_position.x = 5
+    light_position.y = 0
+    light_position.z = 0
+
+    max_distance = 5.0
+
+    expected = True
+    actual = waypoints_helper.is_traffic_light_ahead_of_car(
+        waypoints, car_position, light_position, max_distance)
+
+    assert expected == actual
+
+
+def test_is_traffic_light_ahead_of_car_light_is_too_far_ahead_of_car():
+
+    waypoints = []
+
+    for x in range(0, 10):
+
+        waypoint = styx_msgs.msg.Waypoint()
+        waypoint.pose.pose.position.x = x
+        waypoint.pose.pose.position.y = 0
+        waypoint.pose.pose.position.z = 0
+
+        waypoints.append(waypoint)
+
+    car_position = geometry_msgs.msg.Point()
+    car_position.x = 2
+    car_position.y = 0
+    car_position.z = 0
+
+    light_position = geometry_msgs.msg.Point()
+    light_position.x = 8
+    light_position.y = 0
+    light_position.z = 0
+
+    max_distance = 5.0
+
+    expected = False
+    actual = waypoints_helper.is_traffic_light_ahead_of_car(
+        waypoints, car_position, light_position, max_distance)
+
+    assert expected == actual
+
+
+def test_is_traffic_light_ahead_of_car_light_is_behind_the_car():
+
+    waypoints = []
+
+    for x in range(0, 10):
+
+        waypoint = styx_msgs.msg.Waypoint()
+        waypoint.pose.pose.position.x = x
+        waypoint.pose.pose.position.y = 0
+        waypoint.pose.pose.position.z = 0
+
+        waypoints.append(waypoint)
+
+    car_position = geometry_msgs.msg.Point()
+    car_position.x = 5
+    car_position.y = 0
+    car_position.z = 0
+
+    light_position = geometry_msgs.msg.Point()
+    light_position.x = 3
+    light_position.y = 0
+    light_position.z = 0
+
+    max_distance = 5.0
+
+    expected = False
+    actual = waypoints_helper.is_traffic_light_ahead_of_car(
+        waypoints, car_position, light_position, max_distance)
+
+    assert expected == actual
+
+
+def test_is_traffic_light_ahead_of_car_light_is_ahead_of_waypoints():
+
+    waypoints = []
+
+    for x in range(0, 10):
+
+        waypoint = styx_msgs.msg.Waypoint()
+        waypoint.pose.pose.position.x = x
+        waypoint.pose.pose.position.y = 0
+        waypoint.pose.pose.position.z = 0
+
+        waypoints.append(waypoint)
+
+    car_position = geometry_msgs.msg.Point()
+    car_position.x = 5
+    car_position.y = 0
+    car_position.z = 0
+
+    light_position = geometry_msgs.msg.Point()
+    light_position.x = 20
+    light_position.y = 0
+    light_position.z = 0
+
+    max_distance = 5.0
+
+    expected = False
+    actual = waypoints_helper.is_traffic_light_ahead_of_car(
+        waypoints, car_position, light_position, max_distance)
+
+    assert expected == actual

@@ -41,19 +41,10 @@ class WaypointUpdater(object):
     def __init__(self):
         rospy.init_node('waypoint_updater')
 
-        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
-        rospy.Subscriber('/current_velocity', geometry_msgs.msg.TwistStamped, self.velocity_cb, queue_size=1)
-        rospy.Subscriber('/base_waypoints', Lane, self.base_waypoints_cb, queue_size=1)
-
-        # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
-        rospy.Subscriber('/traffic_waypoint', std_msgs.msg.Int32, self.traffic_cb, queue_size=1)
-
-        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
-
         # TODO: Add other member variables you need below
         self.last_base_waypoints_lane = \
             None
-        self.upcoming_traffic_light_waypoint_id = None
+        self.upcoming_traffic_light_position = None
         self.upcoming_traffic_light_message_time = None
         self.current_linear_velocity = None
         self.pose = None
@@ -72,6 +63,15 @@ class WaypointUpdater(object):
 
         self.previous_debug_time = rospy.get_rostime()
 
+        rospy.Subscriber('/current_pose', PoseStamped, self.pose_cb, queue_size=1)
+        rospy.Subscriber('/current_velocity', geometry_msgs.msg.TwistStamped, self.velocity_cb, queue_size=1)
+        rospy.Subscriber('/base_waypoints', Lane, self.base_waypoints_cb, queue_size=1)
+
+        # TODO: Add a subscriber for /traffic_waypoint and /obstacle_waypoint below
+        rospy.Subscriber('/upcoming_stop_light_position', geometry_msgs.msg.Point, self.traffic_cb, queue_size=1)
+
+        self.final_waypoints_pub = rospy.Publisher('final_waypoints', Lane, queue_size=1)
+
         self.loop()
 
     def loop(self):
@@ -81,8 +81,6 @@ class WaypointUpdater(object):
         rate = rospy.Rate(10)
         while not rospy.is_shutdown():
 
-            # self.current_linear_velocity = 9.0 * miles_per_hour_to_metres_per_second
-
             arguments = [self.last_base_waypoints_lane, self.current_linear_velocity, self.pose]
             are_arguments_available = all([x is not None for x in arguments])
 
@@ -91,33 +89,33 @@ class WaypointUpdater(object):
 
                 base_waypoints = self.last_base_waypoints_lane.waypoints
 
-                smoothed_waypoints_ahead = waypoints_helper.get_dynamic_smooth_waypoints_ahead(
+                smoothed_waypoints_around_car = waypoints_helper.get_dynamic_smooth_waypoints(
                     base_waypoints, self.pose.position, LOOK_AHEAD_METRES, LOOK_BEHIND_METRES)
+
+                smooth_waypoints_matrix = waypoints_helper.get_waypoints_matrix(smoothed_waypoints_around_car)
+
+                car_smooth_waypoint_index = waypoints_helper.get_closest_waypoint_index(
+                    self.pose.position, smooth_waypoints_matrix)
+
+                smoothed_waypoints_ahead = smoothed_waypoints_around_car[car_smooth_waypoint_index:]
 
                 for waypoint in smoothed_waypoints_ahead:
                     waypoint.twist.twist.linear.x = 9.0 * miles_per_hour_to_metres_per_second
 
-                waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
-                car_waypoint_index = waypoints_helper.get_closest_waypoint_index(self.pose.position, waypoints_matrix)
-
-                # Check if we received report of a traffic light, it is ahead of us, but within range of waypoints
-                # we are considering (not too far ahead)
                 is_stop_light_ahead = \
-                    self.upcoming_traffic_light_waypoint_id is not None and \
-                    self.upcoming_traffic_light_waypoint_id > car_waypoint_index and \
-                    self.upcoming_traffic_light_waypoint_id - car_waypoint_index < len(smoothed_waypoints_ahead)
+                    self.upcoming_traffic_light_position is not None and \
+                    waypoints_helper.is_traffic_light_ahead_of_car(
+                        smoothed_waypoints_around_car, self.pose.position, self.upcoming_traffic_light_position)
 
                 if is_stop_light_ahead and not self.is_traffic_light_message_stale():
 
                     # If we don't have a braking path for this light yet
                     if self.braking_path_waypoints is None:
 
-                        light_position = base_waypoints[self.upcoming_traffic_light_waypoint_id].pose.pose.position
-
-                        smooth_waypoint_matrix = waypoints_helper.get_waypoints_matrix(smoothed_waypoints_ahead)
+                        smooth_waypoint_ahead_matrix = waypoints_helper.get_waypoints_matrix(smoothed_waypoints_ahead)
 
                         light_id_in_smooth_waypoints = waypoints_helper.get_closest_waypoint_index(
-                            light_position, smooth_waypoint_matrix)
+                            self.upcoming_traffic_light_position, smooth_waypoint_ahead_matrix)
 
                         distance_to_traffic_light = waypoints_helper.get_road_distance(
                             smoothed_waypoints_ahead[:light_id_in_smooth_waypoints])
@@ -149,6 +147,11 @@ class WaypointUpdater(object):
                 lane.waypoints = smoothed_waypoints_ahead
 
                 self.final_waypoints_pub.publish(lane)
+
+                base_waypoints_matrix = waypoints_helper.get_waypoints_matrix(base_waypoints)
+                car_waypoint_index = waypoints_helper.get_closest_waypoint_index(
+                    self.pose.position, base_waypoints_matrix)
+
                 self.print_car_waypoint(car_waypoint_index)
 
             rate.sleep()
@@ -167,7 +170,7 @@ class WaypointUpdater(object):
     def traffic_cb(self, msg):
 
         # TODO: Callback for /traffic_waypoint message. Implement
-        self.upcoming_traffic_light_waypoint_id = msg.data
+        self.upcoming_traffic_light_position = msg
         self.upcoming_traffic_light_message_time = rospy.get_rostime()
 
     def is_traffic_light_message_stale(self):

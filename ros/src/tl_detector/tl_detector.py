@@ -13,6 +13,7 @@ import cv2
 import tf_helper
 import numpy as np
 import yaml
+import geometry_msgs.msg
 
 
 STATE_COUNT_THRESHOLD = 3
@@ -51,8 +52,6 @@ class TLDetector(object):
         config_string = rospy.get_param("/traffic_light_config")
         self.config = yaml.load(config_string)
 
-        self.upcoming_red_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
-
         self.bridge = CvBridge()
 
         self.experiment_environment = rospy.get_param('/experiment_environment', "site")
@@ -67,7 +66,9 @@ class TLDetector(object):
         rospy.Subscriber('/vehicle/traffic_lights', TrafficLightArray, self.traffic_cb, queue_size=1)
         rospy.Subscriber('/image_color', Image, self.image_cb, queue_size=1)
 
-        self.upcoming_stop_light_pub = rospy.Publisher('/traffic_waypoint', Int32, queue_size=1)
+        self.upcoming_stop_light_pub = rospy.Publisher(
+            '/upcoming_stop_light_position', geometry_msgs.msg.Point, queue_size=1)
+
         self.image_pub = rospy.Publisher('/camera/my_image', Image, queue_size=1)
 
         rospy.spin()
@@ -132,7 +133,7 @@ class TLDetector(object):
                 self.image_pub.publish(marked_image)
 
                 if traffic_light_state == TrafficLight.RED or traffic_light == TrafficLight.YELLOW:
-                    self.upcoming_stop_light_pub.publish(Int32(traffic_light_waypoint_index))
+                    self.upcoming_stop_light_pub.publish(traffic_light.pose.pose.position)
 
     def waypoints_cb(self, lane):
         self.waypoints = lane.waypoints
