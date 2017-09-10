@@ -89,7 +89,7 @@ class WaypointUpdater(object):
 
                 base_waypoints = self.last_base_waypoints_lane.waypoints
 
-                smoothed_waypoints_around_car = waypoints_helper.get_dynamic_smooth_waypoints(
+                smoothed_waypoints_around_car = waypoints_helper.get_dynamic_smooth_waypoints_around_car(
                     base_waypoints, self.pose.position, LOOK_AHEAD_METRES, LOOK_BEHIND_METRES)
 
                 smooth_waypoints_matrix = waypoints_helper.get_waypoints_matrix(smoothed_waypoints_around_car)

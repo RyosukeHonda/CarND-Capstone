@@ -237,7 +237,7 @@ def get_smooth_waypoints_ahead(base_waypoints, car_position, look_ahead_waypoint
     return smoothed_waypoints[look_behind_waypoints_count:]
 
 
-def get_dynamic_smooth_waypoints(waypoints, car_position, look_ahead_metres, look_behind_metres):
+def get_dynamic_smooth_waypoints_around_car(waypoints, car_position, look_ahead_metres, look_behind_metres):
     """
     Given base waypoints, car position and look ahead and behind metres, compute a smooth path around of the car.
     Path should stretch approximately look_behind_metres behind the carn and look_ahead_metres ahead of the car
@@ -258,29 +258,6 @@ def get_dynamic_smooth_waypoints(waypoints, car_position, look_ahead_metres, loo
     smoothed_waypoints = get_smoothed_out_waypoints(nearby_waypoints)
 
     return smoothed_waypoints
-
-
-def get_dynamic_smooth_waypoints_ahead(waypoints, car_position, look_ahead_metres, look_behind_metres):
-    """
-    Given base waypoints, car position and look ahead and behind metres, compute a smooth path ahead of the car.
-    :param waypoints: list of styx_msgs.msg.Waypoint instances
-    :param car_position: car position in base_waypoints
-    :param look_ahead_metres: float, roughly how many metres ahead of the car we should return
-    :param look_behind_metres: float, roughly how many metres behind the car we should consider to smooth the path
-    :return: list of styx_msgs.msg.Waypoint instances
-    """
-
-    waypoints_matrix = get_waypoints_matrix(waypoints)
-    car_waypoint_index = get_closest_waypoint_index(car_position, waypoints_matrix)
-
-    waypoints_behind = get_waypoints_behind_car(waypoints, car_waypoint_index, look_behind_metres)
-    waypoints_ahead = get_waypoints_ahead_of_car(waypoints, car_waypoint_index, look_ahead_metres)
-
-    nearby_waypoints = waypoints_behind + waypoints_ahead
-    smoothed_waypoints = get_smoothed_out_waypoints(nearby_waypoints)
-
-    # Only report waypoints ahead of car
-    return smoothed_waypoints[len(waypoints_behind):]
 
 
 def get_waypoints_ahead_of_car(waypoints, car_waypoint_index, distance):

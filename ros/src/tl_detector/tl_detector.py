@@ -93,7 +93,7 @@ class TLDetector(object):
             # traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
             # self.traffic_lights, self.car_pose.position, waypoints_matrix)
 
-            traffic_light, traffic_light_waypoint_index = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
+            traffic_light = tf_helper.get_info_about_closest_traffic_light_ahead_of_car(
                 self.traffic_positions.lights, self.car_pose.position, waypoints_matrix)
 
             # These values seem so be wrong - Udacity keeps on putting in config different values that what camera

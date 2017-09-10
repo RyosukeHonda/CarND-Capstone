@@ -106,11 +106,9 @@ def get_info_about_closest_traffic_light_ahead_of_car(traffic_lights, car_positi
     if len(lights_waypoints_indices) == 0:
 
         light_index = 0
-        light_waypoint_index = get_closest_waypoint_index(traffic_lights[0].pose.pose.position, waypoints_matrix)
 
     else:
 
         light_index = sorted_traffic_lights_waypoint_indices[0][0]
-        light_waypoint_index = sorted_traffic_lights_waypoint_indices[0][1]
 
-    return traffic_lights[light_index], light_waypoint_index
+    return traffic_lights[light_index]
