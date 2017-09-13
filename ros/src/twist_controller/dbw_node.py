@@ -63,6 +63,7 @@ class DBWNode(object):
         self.previous_loop_time = rospy.get_rostime()
         self.previous_debug_time = rospy.get_rostime()
 
+        # Update PID Values - Matt
         self.throttle_pid = pid.PID(kp=0.5, ki=0.0, kd=0.0, mn=decel_limit, mx=0.5 * accel_limit)
         self.brake_pid = pid.PID(kp=250.0, ki=0.0, kd=2.5, mn=brake_deadband, mx=5000)
         self.steering_pid = pid.PID(kp=0.5, ki=0.0, kd=1.0, mn=-max_steer_angle, mx=max_steer_angle)
